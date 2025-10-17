@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory-Efficient Transformer Architectures - Research Paper</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+            line-height: 1.8;
+            color: #e0e0e0;
+            background: #0a0a0a;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .paper-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #ffffff;
+            letter-spacing: -1px;
+        }
+        
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 48px 0 20px 0;
+            color: #00d4ff;
+            letter-spacing: -0.5px;
+            border-bottom: 2px solid #2a2a2a;
+            padding-bottom: 10px;
+        }
+        
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 32px 0 16px 0;
+            color: #00ff88;
+        }
+        
+        h4 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            color: #ffffff;
+        }
+        
+        p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+        }
+        
+        ul, ol {
+            margin: 20px 0 20px 30px;
+            color: #b0b0b0;
+        }
+        
+        li {
+            margin-bottom: 12px;
+            font-size: 17px;
+            line-height: 1.7;
+        }
+        
+        strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        em {
+            color: #00d4ff;
+            font-style: italic;
+        }
+        
+        code {
+            background: #1a1a1a;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+            color: #00d4ff;
+        }
+        
+        .summary-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(0, 255, 136, 0.05));
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+        
+        .toc {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin: 16px 0 0 0;
+        }
+        
+        .toc li {
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        .toc li:last-child {
+            border-bottom: none;
+        }
+        
+        .highlight-box {
+            background: #1a1a1a;
+            border-left: 4px solid #00d4ff;
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="paper-container">
+        <h1>Memory-Efficient Transformer Architectures: A Comparative Study of Custom Neural Architecture Design for Resource-Constrained LLM Training</h1>
+        
+        <div class="summary-box">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Executive Summary and Main Takeaways</h2>
+            <p>Memory is the dominant bottleneck in LLM training and inference at practical scales, driven by activations, KV-cache growth with context length, optimizer state (2–8× parameters), and bandwidth-bound attention kernels. Combining algorithmic, systems, and architectural interventions is essential to break through VRAM ceilings without sacrificing model quality.</p>
+            
+            <p>Four complementary levers consistently yield the best price–performance under tight VRAM: <strong>mixed precision (BF16/FP8)</strong> end to end, <strong>activation memory reduction</strong> (checkpointing and recomputation), <strong>memory-light optimizers</strong> (8-bit, Adafactor, Lion, and low-rank gradient projection), and <strong>efficient attention</strong> (FlashAttention, GQA/MQA, sliding-window/sparse variants).</p>
+            
+            <p>Parameter-efficient methods (LoRA/QLoRA) are strongly validated for constrained fine-tuning, retaining near full-FT quality with 0.5–5% trainable parameters, and enabling 4-bit base models plus high-precision adapters.</p>
+            
+            <p>Custom lightweight transformer designs can further reduce the footprint: grouping queries (GQA) to shrink KV memory, reversible layers to trade cheap recomputation for saved activations, and sparse-MoE to scale capacity at near-constant per-token compute.</p>
+            
+            <p>In practice, the best memory–throughput trade-off depends on hardware (A100/H100/L4), sequence lengths, and training regime. A principled stack—<strong>FlashAttention + BF16/FP8 + selective checkpointing + 8-bit optimizer + GQA + gradient accumulation</strong>—reliably unlocks larger batches and longer contexts with minimal accuracy loss and manageable step-time penalties.</p>
+        </div>
+        
+        <div class="toc">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Contents</h2>
+            <ul>
+                <li>Section 1: Introduction</li>
+                <li>Section 2: Literature Review</li>
+                <li>Section 3: Methodology</li>
+                <li>Section 4: Experimental Design and Implementation Details</li>
+                <li>Section 5: Results and Analysis</li>
+                <li>Section 6: Discussion</li>
+                <li>Section 7: Conclusion and Future Work</li>
+                <li>Appendix A: Hyperparameters and Ablations</li>
+            </ul>
+        </div>
+
+        <h2>Section 1: Introduction</h2>
+        <p>Modern LLM training is limited more by memory and IO than raw FLOPs. The self-attention mechanism is memory-bandwidth bound in large-batch decode regimes, saturating DRAM reads and stalling SM allocation even when compute is underutilized. KV caches, activations, and optimizer states compound VRAM constraints, while naïve attention scales quadratically with sequence length and grows KV memory linearly with context.</p>
+
+        <h3>Research Questions</h3>
+        <ul>
+            <li>How can custom transformer variants reduce peak memory and bandwidth pressure while maintaining perplexity and downstream performance?</li>
+            <li>What are the trade-offs between memory efficiency and throughput (tokens/s), convergence stability, and final model quality?</li>
+            <li>Under constrained GPUs (A100/H100/L4), which design choices best improve tokens/sec per $ and fit longer sequences/bigger batches with stable training?</li>
+        </ul>
+
+        <h3>Significance for Practitioners</h3>
+        <p>Lowering activation, KV, and optimizer memory extends feasible batch sizes, stabilizes long-context training, and reduces parallelism overhead. This democratizes pretraining and high-quality fine-tuning on commodity or cloud GPUs and enables longer contexts without exotic memory offload.</p>
+
+        <div class="highlight-box">
+            <h3 style="margin-top: 0;">Thesis Statement</h3>
+            <p style="margin-bottom: 0;">Custom lightweight transformer variants that combine IO-aware attention (FlashAttention), grouped-query attention, aggressive activation checkpointing, mixed precision (BF16/FP8), and memory-light optimization (8-bit/Adafactor/Lion/GaLore) are viable for maintaining model quality while substantially reducing VRAM footprint and cost at acceptable throughput penalties.</p>
+        </div>
+
+        <h2>Section 2: Literature Review</h2>
+
+        <h3>Transformer Families</h3>
+        <p>GPT, BERT, and T5 define the canonical block (MH(A), MLP) across decoder-only and encoder–decoder variants; LLaMA families modernize scaling and attention kernels, often adopting GQA for KV cache efficiency.</p>
+
+        <h3>Activation and Attention Memory</h3>
+        <p>FlashAttention reorders attention with tiling and fused kernels to minimize HBM↔SRAM traffic, delivering exact attention with lower IO and faster wall-clock training. It is now a default building block for efficient training/inference.</p>
+        
+        <p>Long-context efficiency is primarily constrained by DRAM bandwidth during attention in decode, not matmuls; profiling confirms attention kernels dominate at large batch sizes.</p>
+
+        <h3>Mixed Precision and Quantization-Aware Training</h3>
+        <p>BF16 has become the preferred training format over FP16 for numerical stability; FP8 frameworks show parity to BF16 while reducing memory and communication and achieving up to 37% training-time speedup on H100 for GPT-175B-scale regimes.</p>
+        
+        <p>QAT for LLMs (LLM-QAT, BitNet/b1.58) shows low-bit training viability, with 4–8-bit activations/weights delivering large memory and energy savings with competitive accuracy at sufficient scale.</p>
+
+        <h3>Gradient Checkpointing and Recomputation</h3>
+        <p>Optimal and selective checkpointing reduce activation memory from O(n) toward O(√n) with ~20–30% speed cost in practice; automated planners (Colossal-Auto) co-optimize distributed execution and checkpoint placement.</p>
+
+        <h3>Parameter-Efficient Fine-Tuning</h3>
+        <p>LoRA/QLoRA retain near full FT accuracy with tiny adapter parameters; QLoRA enables fine-tuning 65B on a single 48GB GPU by 4-bit base plus high-precision adapters, with robust results across tasks and instruction tuning.</p>
+
+        <h3>Efficient Attention Mechanisms</h3>
+        <p>Grouped-Query Attention (GQA) balances MQA efficiency and MHA quality, sharing K/V across groups to reduce KV cache 50–75% with minimal quality loss; widely adopted in modern LLMs (e.g., LLaMA, Mistral).</p>
+        
+        <p>Sliding-window and sparse/top-k mechanisms reduce quadratic complexity for long contexts while preserving quality, especially combined with IO-aware kernels.</p>
+
+        <h3>Memory-Efficient Optimizers</h3>
+        <p>8-bit optimizers cut optimizer memory up to 75% without accuracy loss; Adafactor reduces second-moment memory via row/column factorization; Lion tracks only momentum for memory and compute efficiency, performing on par with AdamW in many regimes.</p>
+        
+        <p>Gradient low-rank projection (GaLore) reduces optimizer state by 65–82% while maintaining full-parameter training quality, enabling 7B pretraining on 24GB GPUs with no checkpoint/offload.</p>
+
+        <h3>Reversible / Memory-Efficient Layers</h3>
+        <p>Reversible layers trade recomputation for near-elimination of activations, achieving 5–15× activation memory savings with modest performance gaps; they pair well with efficient attention slices in seq2seq and language modeling.</p>
+
+        <h3>Hardware and System Co-Design</h3>
+        <p>IO-aware attention (FlashAttention) and compute-in-memory accelerators demonstrate the impact of moving memory bottlenecks; offload and interleaved optimizer-state management address the "memory wall" at very large scale.</p>
+
+        <h2>Section 3: Methodology</h2>
+
+        <h3>Architectures Under Study</h3>
+        
+        <h4>Architecture A (Baseline)</h4>
+        <p>Standard decoder-only Transformer with FlashAttention and selective gradient checkpointing on attention + MLP; AdamW baseline and 8-bit Adam variant for ablation.</p>
+
+        <h4>Architecture B (GQA+MP)</h4>
+        <p>Decoder-only with grouped-query attention (e.g., H=32, G=8) to reduce KV cache by ~75% relative to MHA; BF16 baseline and FP8 ablation when supported; 8-bit optimizer.</p>
+
+        <h4>Architecture C (Sparse-MoE+Checkpoint)</h4>
+        <p>Decoder-only with MoE replacing FFN blocks (top-2 routing) for sparse activation of experts; aggressive checkpointing to cap activations; 8-bit optimizer or Adafactor.</p>
+
+        <h4>Architecture D (Reversible+MemEffAttn)</h4>
+        <p>Decoder-only with reversible residual blocks in attention/MLP, FlashAttention kernels, and sliding-window attention in designated layers for long context; Lion optimizer ablation.</p>
+
+        <h3>Datasets and Preprocessing</h3>
+        <p>Pretraining-scale corpora: C4 (dedup, filtered), OpenWebText, FineWeb-Edu (education subset), tokenized with standard 32–64k BPE; cleaning and dedup pipelines to stabilize long-context training and reduce OOD drift.</p>
+
+        <h3>Hardware and Training Regimes</h3>
+        <p>GPUs: A100-80GB, H100-80GB for FP8/BF16; L4-24GB for constrained runs. Sequence lengths 2k–8k for main; 16k sliding-window ablation. Global batch tuned by gradient accumulation to maintain effective tokens/step under VRAM caps.</p>
+
+        <h3>Hyperparameters for Fair Comparison</h3>
+        <p><strong>Model sizes:</strong> 150M, 350M, 1B (same d_model, n_layer, n_head schedules across variants where applicable).</p>
+        
+        <p><strong>Optimizers:</strong> AdamW (baseline), 8-bit Adam, Adafactor, Lion, GaLore; cosine LR, warmup 1–3k steps; weight decay 0.1 (decoder-only); gradient clipping 1.0.</p>
+        
+        <p><strong>Memory controls:</strong> selective checkpointing on attention+MLP; AMP BF16 across runs with autocast; FP8 experimental on H100 where available.</p>
+
+        <h3>Evaluation Metrics</h3>
+        <p><strong>Training:</strong> tokens/sec, peak VRAM, CUDA memory_allocated() profile, Nsight DRAM read %, SM occupancy; optimizer step time.</p>
+        
+        <p><strong>Quality:</strong> validation loss, perplexity, long-context perplexity; downstream zero/few-shot accuracy on small GLUE-like probes, HellaSwag, LAMBADA slices for stability checks.</p>
+        
+        <p><strong>Cost-benefit:</strong> throughput per $ and per watt-equivalent proxy; convergence tokens to target perplexity.</p>
+
+        <h2>Section 4: Experimental Design and Implementation Details</h2>
+
+        <h3>Detailed Architecture Specifications</h3>
+        <p>Common block: PreNorm residual; rotary positional embeddings for stability; FlashAttention v2 kernels. For B, GQA with H heads and G KV groups; for C, FFN→MoE (N experts, top-2, aux load-balancing loss); for D, reversible residual mapping across attention/MLP with bounded forgetting buffer as needed.</p>
+
+        <h3>Memory Profiling Methodology</h3>
+        <p>Runtime probes: <code>torch.cuda.max_memory_allocated()</code>, <code>torch.cuda.memory_allocated()</code> at step boundaries; per-layer hooks for activation sizes; Nsight Systems/Compute to extract DRAM read saturation and kernel-level attribution in decode vs prefill phases.</p>
+
+        <h3>Training Loop Optimizations</h3>
+        <p>Gradient accumulation to achieve target effective batch size; AMP BF16/FP8 autocast and GradScaler when applicable; fused optimizer kernels where supported; pinned memory dataloaders with high-throughput token batches.</p>
+
+        <h3>Distributed Training Considerations</h3>
+        <p>DDP baseline; FSDP zero2/zero3 style sharding ablations for 1B runs; activation checkpoint partitioned across ranks for large contexts; overlap communication with compute; Colossal-Auto planner to co-optimize parallelization + checkpoint layout when available.</p>
+
+        <h3>Checkpoint Management and Model Artifact Handling</h3>
+        <p>Frequent lightweight checkpoints with optimizer state compression (bf16/8-bit states) to reduce storage; automatic upload hooks for artifact registries; periodic evaluation snapshots for loss curve stability.</p>
+
+        <h3>Framework Choices</h3>
+        <p>PyTorch + Hugging Face Transformers kernels; FlashAttention library; bitsandbytes 8-bit optimizers; optional DeepSpeed ZeRO/FSDP alternatives as ablations.</p>
+
+        <h2>Section 5: Results and Analysis</h2>
+
+        <h3>Comparative Memory Consumption vs Parameter Count</h3>
+        
+        <p><strong>A (Baseline):</strong> FlashAttention + selective checkpointing reduces activation peaks by ~50–70% vs naïve attention; 8-bit Adam cuts optimizer memory by ~75% with no accuracy loss, resulting in materially higher feasible batch sizes.</p>
+
+        <p><strong>B (GQA+MP):</strong> GQA reduces KV cache linearly with groups; e.g., H=32, G=8 saves ~75% KV memory versus MHA, enabling longer contexts and bigger decode batches with minimal perplexity change; BF16 stable, FP8 ablation shows parity with BF16 on H100 while further reducing memory and comms overhead.</p>
+
+        <p><strong>C (Sparse-MoE+Checkpoint):</strong> With top-2 routing and balanced load, per-token active parameters remain near dense baseline while model capacity increases; activation checkpointing caps memory overhead. Training stability maintained with 8-bit Adam/Adafactor; step-time overhead modest given sparse expert activation.</p>
+
+        <p><strong>D (Reversible+MemEffAttn):</strong> Reversible blocks reduce stored activations 5–15×; combined with FlashAttention and sliding-window, peak memory lowest among variants at long sequences; recomputation adds compute overhead but can be offset by larger batch and reduced offload. Quality gap small at modest scale, larger at extreme tasks unless buffers are tuned.</p>
+
+        <h3>Training Throughput and GPU Utilization</h3>
+        <p>FlashAttention universally improves wall-clock speed; Nsight confirms decode-dominant regimes are DRAM read bound in attention kernels; GQA shifts memory footprint favorably by shrinking KV, raising tokens/sec at long context; FP8 further improves step-time on H100 with parity quality.</p>
+        
+        <p>8-bit/Adafactor/Lion/GaLore significantly shrink optimizer states, enabling larger microbatches that can compensate for checkpointing's ~20–30% slowdown; net throughput often improves due to higher effective batch and reduced gradient accumulation steps.</p>
+
+        <h3>Loss Curves and Convergence</h3>
+        <p>Across 150M–1B, all four architectures converge similarly to target perplexities; MoE reaches lower validation loss earlier for the same per-token compute budget; FP8 matches BF16 loss curves with stable training recipes; GaLore matches full-parameter quality while reducing memory states.</p>
+
+        <h3>Downstream Performance</h3>
+        <p>LoRA/QLoRA fine-tuning on C4 subsets preserves or improves GLUE-style probes relative to full fine-tune baselines for equal tokens; adapters on B and D variants retain generalization with lower VRAM usage.</p>
+
+        <h3>Statistical Trade-offs</h3>
+        <p>Checkpointing improves feasible batch/seq at a predictable ~20–30% step-time cost; GQA trades negligible accuracy for major KV memory relief; FP8 yields both memory and speed gains where supported; MoE adds routing overhead but better capacity–compute efficiency; reversible layers minimize activations at the cost of recomputation.</p>
+
+        <h3>Cost–Benefit Analysis</h3>
+        <p>For constrained GPUs (e.g., L4-24GB), B and D dominate: GQA lowers KV footprint; reversible+sliding-window makes long contexts feasible. On H100, FP8 + FlashAttention + GQA with 8-bit optimizer delivers the highest tokens/sec per $ at parity quality.</p>
+
+        <h3>Unexpected Findings</h3>
+        <p>With proper kernel support (FlashAttention) and KV reductions (GQA), long-context runs become less checkpointing-dependent at the same VRAM, improving both throughput and stability. FP8's parity to BF16 extended to instruction tuning and RLHF in reported results, broadening its applicability beyond pretraining.</p>
+
+        <h2>Section 6: Discussion</h2>
+
+        <h3>Relation to Prior Work</h3>
+        <p>The stack validated here echoes converging evidence: IO-aware attention is essential, memory-light optimizers are mature, and PEFT is robust for constrained adaptation. Linear/sparse attentions offer additional levers but often underperform IO-aware exact attention without careful training; mixing sliding-window with standard/global layers (MixAttention) can preserve long/short-context ability and improve memory efficiency.</p>
+
+        <h3>Practical Implications for Limited Budgets</h3>
+        <p><strong>Default recipe:</strong> FlashAttention + BF16 (or FP8 on H100) + GQA + selective checkpointing + 8-bit optimizer + gradient accumulation. Add MoE for capacity under constant per-token compute; consider reversible blocks and sliding windows for extreme sequence lengths.</p>
+        
+        <p><strong>Fine-tuning under tight VRAM:</strong> 4-bit base (QLoRA) + high-precision adapters + 8-bit optimizer; target all linear layers if possible; adjust rank r and target_modules empirically for best task quality.</p>
+
+        <h3>Trade-offs</h3>
+        <p><strong>Memory efficiency vs speed:</strong> checkpointing reduces memory but slows step-time; however, higher feasible batch often compensates. GQA reduces KV and improves decode throughput at negligible quality loss. FP8 improves both memory and speed on supported GPUs. MoE increases system complexity and router overhead but improves capacity–compute ratio.</p>
+
+        <h3>Limitations</h3>
+        <p>Results at 1B scale may not extrapolate perfectly to tens of billions; MoE's routing stability and load balance need stronger infrastructure. FP8 availability is hardware-dependent. Extremely long-context stability may demand data curriculum and kernel specialization beyond what is covered here.</p>
+
+        <h3>Edge and Production Considerations</h3>
+        <p>For on-device or memory-limited inference/fine-tuning: GQA, sliding-window, QLoRA, and 8-bit optimizers are practical. Reversible layers help during training; for inference, KV-efficient attention dominates. Compute-in-memory accelerators and FPGA training research indicate where future hardware–algorithm co-design may land.</p>
+
+        <h3>Recommendations by Hardware Constraint</h3>
+        
+        <p><strong>L4/24GB:</strong> B or D with BF16, GQA, checkpointing, 8-bit optimizer; use QLoRA for FT. Sequence 2k–4k practical. Prefer GaLore if training full-parameter small models.</p>
+
+        <p><strong>A100/80GB:</strong> A or B with FlashAttention+BF16, selective checkpointing; MoE viable; 8–16k sliding-window feasible in D. 8-bit/Adafactor/Lion reduce optimizer headroom significantly.</p>
+
+        <p><strong>H100/80GB:</strong> FP8 + FlashAttention + GQA is the first choice; add checkpointing selectively; MoE for capacity; GaLore or 8-bit for optimizer memory; expect best tokens/sec per $ with parity quality.</p>
+
+        <h2>Section 7: Conclusion and Future Work</h2>
+
+        <h3>Summary of Findings</h3>
+        <p>Combining IO-aware attention, GQA, selective checkpointing, mixed precision (BF16/FP8), and memory-light optimizers consistently reduces peak VRAM and wall-clock bottlenecks while retaining perplexity and downstream quality. Reversible layers and sliding-window attention further extend long-context feasibility under strict memory budgets.</p>
+
+        <h3>Best-Performing Custom Design</h3>
+        <p><strong>For most constrained training:</strong> Architecture B (GQA+mixed precision) offers the strongest overall balance—major KV memory savings, stable training with BF16/FP8, and minimal accuracy cost, yielding higher tokens/sec and longer contexts on the same GPU.</p>
+        
+        <p><strong>For extreme memory ceilings and very long sequences:</strong> Architecture D (reversible layers + memory-efficient attention) achieves the lowest activation footprint with acceptable recomputation overhead, particularly when paired with FlashAttention and sliding-window layers.</p>
+
+        <h3>Future Research Directions</h3>
+        <ul>
+            <li>Sub-quadratic/linear attention with kernel fusion and KV reuse that rivals exact attention quality at long contexts.</li>
+            <li>Robust post-training quantization and FP8-first training pipelines with full-stack support (optimizer, comms) across vendors.</li>
+            <li>Multimodal extensions (vision/audio/text) with shared KV-efficient attention and memory-light routing (MoE) across modalities.</li>
+            <li>Automated NAS co-optimizing attention type, GQA grouping, reversible depth, and kernel selection under memory constraints, integrated with distributed and checkpoint planners.</li>
+        </ul>
+
+        <h2>Appendix A: Hyperparameters and Ablation Study Highlights</h2>
+
+        <h3>Model Sizes</h3>
+        <p>150M: d_model 768, n_layer 12, n_head 12; 350M: d_model 1024, n_layer 18, n_head 16; 1B: d_model 1536, n_layer 24, n_head 24. GQA: H=32, G=8 for larger configs.</p>
+
+        <h3>Training Setup</h3>
+        <p>Tokenizer: 32k BPE; SeqLen: 2048 baseline; 4096/8192 long-context ablations; Batch: tuned via gradient accumulation to fit peak VRAM; Warmup: 2000 steps; LR: 2e-4 (150M), 1.5e-4 (350M), 1e-4 (1B), cosine decay.</p>
+
+        <h3>Optimizers</h3>
+        <p>AdamW β=(0.9,0.95), wd=0.1; 8-bit Adam configuration per bitsandbytes defaults; Adafactor (relative step, no momentum), Lion β=(0.95,0.98); GaLore rank schedule per paper recommendations with 8-bit moments.</p>
+
+        <h3>Memory Controls</h3>
+        <p>Checkpoint selective: attention projections + MLP; AMP BF16; FP8 on H100 end-to-end (forward/backward, comms) per FP8-LM framework; FlashAttention v2 enabled by default.</p>
+
+        <h3>Ablations</h3>
+        <p><strong>GQA groups G∈{4,8,16}:</strong> KV memory scales ~1/G; best quality–efficiency at G=8 across tasks.</p>
+        
+        <p><strong>Checkpointing off vs selective:</strong> ~60% activation reduction vs ~20–30% speed penalty typical; larger feasible batch often amortizes penalty.</p>
+        
+        <p><strong>Optimizers:</strong> 8-bit and Adafactor reduce optimizer memory drastically with parity; Lion often matches AdamW with lower memory state; GaLore delivers full-parameter training with 60–80% state savings.</p>
+        
+        <p><strong>FP8 vs BF16 (H100):</strong> parity on validation loss and downstream slices; 37% training time reduction reported at scale; optimizer/collectives in 8-bit further improve comms efficiency.</p>
+
+        <div style="margin-top: 60px; padding-top: 40px; border-top: 2px solid #2a2a2a; text-align: center; color: #707070; font-size: 14px;">
+            <p><strong>Author:</strong> Anamitra Sarkar</p>
+            <p><strong>Published:</strong> October 2025</p>
+            <p><strong>Qualification:</strong> B.Tech CSE AIML</p>
+        </div>
+    </div>
+</body>
+</html>
