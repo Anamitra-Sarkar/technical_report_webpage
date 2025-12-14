@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Rewriting Neural Architectures</title>
+    
+    <!-- MathJax for rendering LaTeX equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* Core Design System */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+            line-height: 1.8;
+            color: #e0e0e0;
+            background: #0a0a0a;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .paper-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Typography */
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #ffffff;
+            letter-spacing: -1px;
+        }
+        
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 56px 0 24px 0;
+            color: #00d4ff; /* Cyan Accent */
+            letter-spacing: -0.5px;
+            border-bottom: 2px solid #2a2a2a;
+            padding-bottom: 12px;
+        }
+        
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 36px 0 16px 0;
+            color: #00ff88; /* Green Accent */
+        }
+        
+        h4 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            color: #ffffff;
+        }
+        
+        p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 20px 0 20px 30px;
+            color: #b0b0b0;
+        }
+        
+        li {
+            margin-bottom: 12px;
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Code & Pre */
+        code {
+            background: #1a1a1a;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+            color: #00d4ff;
+        }
+
+        pre {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 24px 0;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #e0e0e0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Custom Components */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(0, 255, 136, 0.05));
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+
+        .highlight-box {
+            background: #1a1a1a;
+            border-left: 4px solid #00d4ff;
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+
+        .toc {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin: 16px 0 0 0;
+        }
+        
+        .toc li {
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        .toc li:last-child {
+            border-bottom: none;
+        }
+
+        .toc a {
+            color: #b0b0b0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: #00d4ff;
+        }
+        
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 32px 0;
+            background: #161616;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        th {
+            background: #1f1f1f;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        td {
+            color: #b0b0b0;
+            font-size: 15px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 2px solid #2a2a2a;
+            text-align: center;
+            color: #707070;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="paper-container">
+        <h1>Self-Rewriting Neural Architectures via Real-Time Gradient-Driven Structural Evolution</h1>
+        
+        <div class="summary-box">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Abstract</h2>
+            <p>We introduce a foundational theoretical framework for <strong>self-rewriting neural architectures</strong>—networks that dynamically alter their computational graph topology during training in direct response to gradient field geometry. Unlike static neural architecture search (NAS) methods that identify optimal architectures offline, and unlike pruning or dynamic routing approaches that merely suppress computation, we propose networks that perform real-time <strong>structural morphogenesis</strong> driven by continuous gradient-topology signals. The core novelty lies in formalizing how <strong>gradient field curvature and information-theoretic load indicators</strong> generate structural mutations (layer insertion/deletion, connection rewiring, neuron specialization) coupled to the optimization dynamics itself. We develop rigorous mathematical foundations grounded in differential geometry of gradient manifolds, dynamical systems theory, and graph rewrite algebra. We prove stability constraints under which topology evolution does not destabilize convergence, derive computational complexity bounds, characterize failure modes, and propose validation experiments across NLP, vision, and multimodal domains. This work positions self-rewriting architectures as a fundamentally new class of learnable systems where network structure co-evolves with weights—opening a research frontier for adaptive, task-responsive, and thermodynamically efficient neural computation.</p>
+            <p><strong>Keywords:</strong> Self-rewriting architectures, gradient topology, dynamic graph rewriting, real-time morphogenesis, adaptive neural networks, differential geometry of optimization, structural evolution, information-theoretic architecture design</p>
+        </div>
+        
+        <div class="toc">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Contents</h2>
+            <ul>
+                <li><a href="#intro">1. Introduction</a></li>
+                <li><a href="#related">2. Related Work: Positioning Within the Landscape</a></li>
+                <li><a href="#framework">3. Core Theoretical Framework</a></li>
+                <li><a href="#formulation">4. Mathematical Formulation</a></li>
+                <li><a href="#dynamics">5. Dynamical Systems Interpretation</a></li>
+                <li><a href="#info-theory">6. Information-Theoretic Interpretation</a></li>
+                <li><a href="#algo">7. Algorithm Design</a></li>
+                <li><a href="#complexity">8. Computational Complexity Analysis</a></li>
+                <li><a href="#stability">9. Convergence and Stability Theory</a></li>
+                <li><a href="#experiments">10. Proposed Experimental Validation</a></li>
+                <li><a href="#metrics">11. Evaluation Metrics Beyond Accuracy</a></li>
+                <li><a href="#failure">12. Failure Modes and Safety Constraints</a></li>
+                <li><a href="#comparison">13. Comparison Against Existing Paradigms</a></li>
+                <li><a href="#agi">14. Implications for AGI and Long-Horizon Learning</a></li>
+                <li><a href="#limitations">15. Limitations and Open Questions</a></li>
+                <li><a href="#conclusion">16. Conclusion</a></li>
+            </ul>
+        </div>
+
+        <h2 id="intro">1. Introduction</h2>
+        
+        <h3>1.1 The Static Architecture Problem</h3>
+        <p>Contemporary deep learning rests upon a foundational assumption: the architecture—the fixed computational graph specifying layer depths, widths, connectivity patterns, and routing strategies—is determined <em>a priori</em> and remains invariant during training. This assumption creates a trilemma:</p>
+        <ol>
+            <li><strong>Suboptimal structure for dynamic task requirements.</strong> A fixed architecture cannot adapt to discovered task structure during learning. An architecture optimized for CIFAR-10 may be wasteful on MNIST, yet must process both with identical topology.</li>
+            <li><strong>Inefficient capacity allocation.</strong> Early training phases may require different computation patterns than late phases. Critical regions of the input space may demand specialized pathways. Yet static architectures allocate resources uniformly and permanently.</li>
+            <li><strong>Architectural stagnation.</strong> Even with hyperparameter optimization and NAS, once training begins, the computational graph is immutable. The network cannot respond to emerging features, learned hierarchies, or training instabilities by reorganizing itself.</li>
+        </ol>
+        <p>Traditional remedies address only symptoms: neural architecture search explores the space of possible topologies offline; mixture-of-experts and dynamic routing modulate which components execute; pruning and quantization sparsify weights; hypernetworks and other metalearning methods generalize architecture design. Yet all preserve the fundamental invariant: <strong>the graph topology itself does not change during forward-backward passes on actual training data.</strong></p>
+
+        <h3>1.2 The Hypothesis: Gradient-Topology Coupling</h3>
+        <p>We propose that neural networks should be fundamentally <strong>self-modifying</strong> systems. The network's structure—its graph topology—should be derived from the gradient field geometry of the loss landscape, updated continuously during training through deterministic, stability-preserving rewrite rules.</p>
+        <p><strong>Core hypothesis:</strong> The gradient flow of an optimization problem contains sufficient signal about task structure and computational necessity to drive intelligent architectural decisions in real time. A network that reads this signal and rewrites itself accordingly can:</p>
+        <ul>
+            <li>Allocate depth and width dynamically to task requirements</li>
+            <li>Delete inactive or redundant pathways</li>
+            <li>Insert new structural patterns where gradient geometry signals insufficient expressivity</li>
+            <li>Specialize subnetworks through topology refinement</li>
+            <li>Maintain stability and convergence guarantees throughout</li>
+        </ul>
+
+        <h3>1.3 Novel Contribution: Why This Is Not NAS, NEAT, Pruning, or MoE</h3>
+        <p><strong>Distinction from NAS/DARTS:</strong> Neural architecture search operates offline or in the supernet paradigm—exploring a static search space of architecture parameters, then selecting a final discretized architecture. Self-rewriting architectures perform continuous topology evolution <em>synchronized with gradient descent</em>—the topology is not fixed even momentarily.</p>
+        <p><strong>Distinction from NEAT:</strong> Neuroevolution of Augmenting Topologies uses evolutionary strategies to grow network structure by adding neurons and connections over generations. It is fundamentally discrete and evolutionary. Self-rewriting architectures use continuous gradient signals (not fitness evaluations) and rewrite the graph through deterministic, differentiable operators coupled to the backpropagation itself.</p>
+        <p><strong>Distinction from pruning:</strong> Pruning removes weights or filters deemed unimportant by magnitude or sensitivity measures. Deletion is irreversible and applies offline or on fixed schedules. Self-rewriting allows <strong>insertion, deletion, and rewiring in online, adaptive fashion</strong>—driven not by magnitude thresholding but by gradient-field geometry indicating where computation is most needed.</p>
+        <p><strong>Distinction from MoE and dynamic routing:</strong> Mixture-of-experts and dynamic routing keep the full graph topology fixed while modulating which expert/edge is active for each input. No structural elements are actually added or removed from the graph; only their throughput varies. Self-rewriting networks actually modify the adjacency structure.</p>
+
+        <h3>1.4 Scope and Positioning</h3>
+        <p>This paper presents a <strong>theoretical framework and mathematical formulation</strong>—not an experimentally validated system. We develop:</p>
+        <ul>
+            <li>A rigorous algebra for graph rewrite rules coupled to gradient dynamics</li>
+            <li>Stability theorems bounding topology evolution under Lyapunov constraints</li>
+            <li>Complexity analysis of continuous topology mutation</li>
+            <li>Convergence guarantees under controlled rewriting</li>
+            <li>Characterization of failure modes and safe boundaries</li>
+            <li>Proposed experimental protocols (simulated, not executed)</li>
+        </ul>
+        <p>The work is positioned to seed a new research direction: <strong>adaptive topology evolution under gradient-geometric control</strong>.</p>
+
+        <h2 id="related">2. Related Work: Positioning Within the Landscape</h2>
+        
+        <h3>2.1 Neural Architecture Search</h3>
+        <p>Gradient-based NAS methods (DARTS, SNAS, ProxylessNAS) relax discrete architecture choices into continuous parameters, optimizing them via gradient descent during a search phase. The architecture parameters \(\alpha\) are optimized alongside weight parameters \(w\) in a bilevel optimization framework:</p>
+        <p>\[\min_{\alpha} \mathcal{L}_{\text{val}}(w^*(\alpha), \alpha), \quad w^*(\alpha) = \arg\min_w \mathcal{L}_{\text{train}}(w, \alpha)\]</p>
+        <p>At the conclusion of the search, architecture parameters are discretized (argmax operation) to obtain a final static architecture. <strong>Key difference:</strong> NAS explores the architecture space; self-rewriting networks evolve the actual graph topology coupled to every training step.</p>
+
+        <h3>2.2 Neuroevolution and NEAT</h3>
+        <p>NEAT evolves both weights and topologies using genetic algorithms, starting from minimal structure and incrementally adding neurons and connections. Speciation protects innovation; topology is grown discretely over evolutionary generations. While NEAT anticipates topology evolution, it operates in an evolutionary, not gradient-driven paradigm, and mutations are stochastic. Self-rewriting architectures use gradient signals—deterministic, instantaneous updates.</p>
+
+        <h3>2.3 Pruning and Sparsification</h3>
+        <p>Modern structured pruning identifies and removes less important filters, neurons, or weights, either iteratively or as part of training. Methods like RigL and SRigL dynamically rewire sparse networks during training by removing low-magnitude weights and adding new connections. However, pruning fundamentally begins with a full/dense network and removes—it does not continuously grow new structure in response to task-specific demands. Sparsity patterns are typically learned passively (by magnitude) rather than driven by gradient field geometry.</p>
+
+        <h3>2.4 Dynamic Routing and Mixture-of-Experts</h3>
+        <p>Mixture-of-Experts (MoE) architectures maintain a fixed set of experts and route tokens to subsets based on learned gating functions. Recent work on dynamic routing adjusts the number of activated experts per input. Yet the expert set itself remains fixed—routing modulates <em>which</em> experts are used, not <em>whether</em> experts exist or how they are interconnected. The graph topology is invariant.</p>
+
+        <h3>2.5 Dynamic Graph Neural Networks</h3>
+        <p>Dynamic GNN literature studies networks that operate on time-evolving graphs (discrete or continuous-time) where node and edge sets change. However, the networks themselves are static: the architecture of the neural model does not change. The input graphs change, but the network's internal structure does not. Self-rewriting networks flip this: the network's structure evolves, potentially with static or dynamic inputs.</p>
+
+        <h3>2.6 Hypernetworks and Meta-Learning</h3>
+        <p>Hypernetworks generate weights conditionally based on input or task. Meta-learning approaches learn to adapt networks rapidly to new tasks. These allow weight generation but not structural topology changes—the graph connectivity pattern remains fixed.</p>
+
+        <h3>2.7 Logical Positioning</h3>
+        <p>Self-rewriting neural architectures occupy a novel space:</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Dimension</th>
+                    <th>NAS</th>
+                    <th>NEAT</th>
+                    <th>Pruning</th>
+                    <th>MoE</th>
+                    <th>Self-Rewriting</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Topology evolution mechanism</strong></td>
+                    <td>Search space exploration</td>
+                    <td>Evolutionary mutation</td>
+                    <td>Magnitude-based removal</td>
+                    <td>Fixed</td>
+                    <td>Gradient-geometric rewriting</td>
+                </tr>
+                <tr>
+                    <td><strong>Timing</strong></td>
+                    <td>Offline/supernet</td>
+                    <td>Evolutionary generations</td>
+                    <td>Iterative or scheduled</td>
+                    <td>Static</td>
+                    <td>Real-time, continuous</td>
+                </tr>
+                <tr>
+                    <td><strong>Graph modification</strong></td>
+                    <td>Discrete selection</td>
+                    <td>Incremental addition</td>
+                    <td>Removal only</td>
+                    <td>Modulation (no change)</td>
+                    <td>Addition, deletion, rewiring</td>
+                </tr>
+                <tr>
+                    <td><strong>Driver signal</strong></td>
+                    <td>Performance metrics</td>
+                    <td>Fitness</td>
+                    <td>Weight magnitude</td>
+                    <td>Gating function</td>
+                    <td>Gradient field curvature</td>
+                </tr>
+                <tr>
+                    <td><strong>Coupling to gradient descent</strong></td>
+                    <td>Weak (bilevel optimization)</td>
+                    <td>None (evolutionary)</td>
+                    <td>Orthogonal (post-hoc)</td>
+                    <td>Via gating gradients</td>
+                    <td>Intrinsic (core mechanism)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2 id="framework">3. Core Theoretical Framework</h2>
+        
+        <h3>3.1 Graph Representation of Neural Networks</h3>
+        <p>We represent a neural network as a directed acyclic graph (DAG) \(G = (V, E, \Theta)\) where:</p>
+        <ul>
+            <li>\(V = \{v_1, \ldots, v_n\}\): nodes representing neurons or feature channels</li>
+            <li>\(E \subseteq V \times V\): directed edges representing synaptic connections</li>
+            <li>\(\Theta = \{W_{ij} : (v_i, v_j) \in E\}\): weight matrices indexed by edges</li>
+        </ul>
+        <p>Each node \(v_i\) has an associated layer index \(\ell_i \in \{0, 1, \ldots, L\}\) (input to output layers). We denote the set of predecessor nodes as \(\text{Pred}(v_i) = \{v_j : (v_j, v_i) \in E\}\) and successors as \(\text{Succ}(v_i)\).</p>
+        <p>The forward pass computes activations:</p>
+        <p>\[a_i = \sigma\left(\sum_{j \in \text{Pred}(v_i)} W_{ji} a_j\right)\]</p>
+        <p>where \(\sigma\) is an activation function.</p>
+
+        <h3>3.2 Gradient Field Topology</h3>
+        <p>The loss landscape \(\mathcal{L}(w) : \mathbb{R}^{|E|} \to \mathbb{R}\) induces a gradient field \(\nabla_w \mathcal{L}(w)\). For each edge weight \(W_{ij}\), the gradient is:</p>
+        <p>\[\frac{\partial \mathcal{L}}{\partial W_{ij}} = \delta_i a_j\]</p>
+        <p>where \(\delta_i\) is the backpropagated error at node \(i\).</p>
+        <p><strong>Definition (Gradient Topology):</strong> The <strong>gradient topology</strong> at step \(t\) is the structure induced by the gradient field:</p>
+        <p>\[\mathcal{G}_t = \{(v_i, v_j) : \left|\frac{\partial \mathcal{L}}{\partial W_{ij}}\right| > \tau_g(t)\}\]</p>
+        <p>where \(\tau_g(t)\) is a dynamic threshold. This defines which edges are "active" (high gradient signal) versus "inactive" (low gradient signal).</p>
+        <p><strong>Intuition:</strong> The gradient topology highlights where computation is flowing—where parameter updates are large, suggesting the architecture is being used intensively. Conversely, edges with negligible gradients suggest either redundancy or insufficient capacity.</p>
+
+        <h3>3.3 Information-Theoretic Load Indicators</h3>
+        <p>Beyond magnitude, we measure the <strong>information load</strong> on nodes and edges using entropy of feature activations.</p>
+        <p><strong>Definition (Neuron Load Index):</strong> For a neuron \(v_i\), define the activation entropy:</p>
+        <p>\[H_i(t) = -\sum_x p_i(x; t) \log p_i(x; t)\]</p>
+        <p>where \(p_i(x; t)\) is the empirical distribution of activations \(a_i\) across the minibatch at step \(t\).</p>
+        <ul>
+            <li>High entropy: neuron's output varies across inputs—it is being used discriminatively</li>
+            <li>Low entropy: neuron's output is nearly constant—it may be redundant or dead</li>
+        </ul>
+        <p><strong>Definition (Edge Load):</strong> Combine gradient magnitude with activation entropy of source and target:</p>
+        <p>\[\text{Load}(v_i \to v_j) = \left|\frac{\partial \mathcal{L}}{\partial W_{ij}}\right| \cdot H_i(t) \cdot H_j(t)\]</p>
+        <p>This composite signal identifies edges that are both actively trained and contribute to feature discrimination.</p>
+
+        <h3>3.4 Structural Mutation Operators</h3>
+        <p>Self-rewriting networks modify the graph through four primitive operations:</p>
+
+        <h4>3.4.1 Edge Insertion</h4>
+        <p><strong>Operator \(\mathcal{I}(v_i, v_j)\):</strong> Add an edge from \(v_i\) to \(v_j\) if:</p>
+        <ol>
+            <li>No edge exists: \((v_i, v_j) \notin E\)</li>
+            <li>Topological ordering is preserved: \(\ell_i < \ell_j\)</li>
+            <li>Insertion is signaled by high "gradient potential"</li>
+        </ol>
+        <p><strong>Insertion criterion:</strong> Compute for all non-edge pairs:</p>
+        <p>\[\Phi_{\text{ins}}(v_i, v_j, t) = \frac{1}{d_j} \sum_{v_k \in \text{Pred}(v_j)} |\nabla_{W_{kj}}|^2 \cdot d(i, j)\]</p>
+        <p>where \(d_j\) is the in-degree of \(v_j\) and \(d(i, j)\) is the distance in topological ordering. If \(\Phi_{\text{ins}}(v_i, v_j, t) > \xi_{\text{ins}}\), insertion is attempted.</p>
+        <p><strong>Initialization:</strong> New weight matrices are initialized near zero with small random perturbation: \(W_{ij}^{(0)} \sim \mathcal{N}(0, \epsilon^2)\), \(\epsilon \ll 1\), allowing gradual integration.</p>
+
+        <h4>3.4.2 Edge Deletion</h4>
+        <p><strong>Operator \(\mathcal{D}(v_i, v_j)\):</strong> Remove edge \((v_i, v_j) \in E\) if:</p>
+        <ol>
+            <li>Edge exists</li>
+            <li>Deletion does not isolate nodes</li>
+            <li>Load is below threshold</li>
+        </ol>
+        <p><strong>Deletion criterion:</strong></p>
+        <p>\[\text{Load}(v_i \to v_j) < \xi_{\text{del}}\]</p>
+        <p>Additionally, require that removal does not create network partitions (i.e., all nodes remain reachable from input to output).</p>
+
+        <h4>3.4.3 Neuron Insertion</h4>
+        <p><strong>Operator \(\mathcal{N}_{\text{add}}(v, \ell)\):</strong> Insert a new neuron \(v'\) at layer \(\ell\) if intermediate layers show high connectivity demand.</p>
+        <p><strong>Insertion criterion:</strong> If for layer \(\ell\), the average pairwise distance between successive nodes (measured by path count) exceeds a threshold, a new node is added to increase expressivity locally:</p>
+        <p>\[\bar{d}_{\ell} = \frac{1}{|V_{\ell}| |V_{\ell+1}|} \sum_{v_i \in V_{\ell}, v_j \in V_{\ell+1}} d_{\text{path}}(v_i, v_j) > \nu_{\text{add}}\] </p>
+
+        <h4>3.4.4 Neuron Deletion</h4>
+        <p><strong>Operator \(\mathcal{N}_{\text{rem}}(v)\):</strong> Remove a neuron if its entropy is below threshold and it is not critical for output:</p>
+        <p>\[H_i < \nu_{\text{rem}} \quad \text{and} \quad |\text{Succ}(v_i)| < 2\]</p>
+
+        <h3>3.5 Stability-Preserving Morphisms</h3>
+        <p><strong>Central design principle:</strong> Every graph rewrite must preserve a <strong>morphism property</strong> ensuring that convergence guarantees inherited from the original network transfer to the rewritten network.</p>
+        <p><strong>Definition (Convergence Morphism):</strong> A sequence of rewrites \(\mathcal{R}_t : G_t \to G_{t+1}\) preserves a convergence morphism if the rewritten network \(G_{t+1}\) admits loss landscapes with Polyak-Łojasiewicz (PL) constants \(\mu(t+1) \geq \mu(t) - \delta_{\mu}\) for controlled \(\delta_{\mu}\).</p>
+        <p><strong>Theorem 3.1 (Morphism Preservation under Small Insertions):</strong> Suppose network \(G_t\) has loss \(\mathcal{L}_t(w_t)\) satisfying the PL condition with constant \(\mu_t > 0\). If a new edge is inserted with weight \(W_{ij}^{(0)} \in [-\epsilon, \epsilon]\) for \(\epsilon < \mu_t / (2 \|\nabla a_i\|_{\infty} \|a_j\|_{\infty})\), then the new network \(G_{t+1}\) satisfies PL with \(\mu_{t+1} \geq \mu_t / 2\).</p>
+        <p><em>Proof sketch:</em> Small perturbations to the loss landscape are controlled by the Lipschitz constant of the gradient. Since \(W_{ij}^{(0)}\) is \(O(\epsilon)\), the loss shift is \(O(\epsilon \|a_i\| \|a_j\|)\), which can be absorbed into the PL constant for sufficiently small \(\epsilon\).</p>
+        <p><strong>Theorem 3.2 (Stability Under Deletion):</strong> If edge \((v_i, v_j)\) satisfies \(\text{Load}(v_i \to v_j) < \xi_{\text{del}}\), then deletion does not increase the Lipschitz constant of the network's gradient mapping by more than \(\xi_{\text{del}}\).</p>
+        <p><em>Proof sketch:</em> The contribution of edge \((v_i, v_j)\) to the gradient of any output node is bounded by \(\text{Load}(v_i \to v_j) \cdot \|w_{\text{downstream}}\|\). Removing low-load edges has bounded impact on gradient magnitude.</p>
+
+        <h3>3.6 Coupling Between Topology Evolution and Weight Updates</h3>
+        <p>The network undergoes coupled dynamics:</p>
+        <p>\[\frac{dw}{dt} = -\eta \nabla_w \mathcal{L}(w, G(t))\]</p>
+        <p>\[\frac{dG}{dt} = \mathcal{R}(G(t), \nabla_w \mathcal{L}, H(t), t)\]</p>
+        <p>where the rewrite operator \(\mathcal{R}\) depends on:</p>
+        <ul>
+            <li>Current gradient field \(\nabla_w \mathcal{L}\)</li>
+            <li>Neuron load indices \(H(t)\)</li>
+            <li>Current time/epoch \(t\)</li>
+        </ul>
+        <p>The topology is not free to change arbitrarily; it is constrained by the morphism property and by careful threshold scheduling (Section 3.5).</p>
+
+        <h2 id="formulation">4. Mathematical Formulation</h2>
+        
+        <h3>4.1 Graph Rewrite Algebra</h3>
+        <p>We formalize topology mutations using rewrite rules in a graph algebra.</p>
+        <p><strong>Definition (Graph Rewrite Rule):</strong> A rewrite rule is a triple \((\text{LHS}, \text{RHS}, C)\) where:</p>
+        <ul>
+            <li><strong>LHS</strong> is a pattern (subgraph) to match</li>
+            <li><strong>RHS</strong> is the replacement pattern</li>
+            <li><strong>C</strong> is a set of <strong>conditions</strong> (gradient-based, load-based, topological constraints)</li>
+        </ul>
+        <p><strong>Example 1 (Insert Bypass Edge):</strong></p>
+        <ul>
+            <li>LHS: Path \(v_i \to v_k \to v_j\) (multi-hop connection)</li>
+            <li>RHS: Path \(v_i \to v_k \to v_j\) with additional direct edge \(v_i \to v_j\)</li>
+            <li>Condition: \(\sum_{v_m \in \text{path}} \text{Load}(v_m \to v_{m+1}) > \tau_{\text{bypass}}\)</li>
+        </ul>
+        <p>This rule inserts skip connections when intermediate nodes have high cumulative load.</p>
+        <p><strong>Example 2 (Merge Low-Load Nodes):</strong></p>
+        <ul>
+            <li>LHS: Pair of nodes \(v_i, v_j\) in succession with \(|\text{Succ}(v_i)| = 1\) and \(\text{Pred}(v_j) = \{v_i\}\)</li>
+            <li>RHS: Single merged node \(v'_{ij}\)</li>
+            <li>Condition: \(H_i + H_j < 2\nu_{\text{threshold}}\) (both nodes have low entropy)</li>
+        </ul>
+        <p><strong>Rewrite System \(\mathcal{S}\):</strong> The set of all applicable rules forms a rewrite system. At each training step, we:</p>
+        <ol>
+            <li>Evaluate all LHS patterns against the current graph \(G_t\)</li>
+            <li>For each match, check the condition \(C\)</li>
+            <li>Apply selected rewrites using a priority queue (e.g., by descending gradient potential)</li>
+            <li>Limit number of rewrites per step to \(K_{\text{rewrites}}(t)\) (schedule decreases over training)</li>
+        </ol>
+
+        <h3>4.2 Continuous vs. Discrete Topology Evolution</h3>
+        <p><strong>Discrete Formulation:</strong> At discrete steps, rewrite rules are applied:</p>
+        <p>\[G_{t+1} = \mathcal{R}(G_t, \text{gradient signal at } t)\]</p>
+        <p>This is amenable to implementation but introduces discontinuities.</p>
+        <p><strong>Continuous Formulation:</strong> Model topology evolution as a continuous process. For each potential edge not in the graph, define a "growth potential":</p>
+        <p>\[\phi_{ij}(t) = \Phi_{\text{ins}}(v_i, v_j, t) - \xi_{\text{ins}}\]</p>
+        <p>Then use a smooth transition to incorporate the edge:</p>
+        <p>\[\frac{dW_{ij}}{dt} = [\phi_{ij}(t)]_+ \cdot \eta_{\text{ins}} \cdot g(W_{ij}, \nabla W_{ij})\]</p>
+        <p>where \([\cdot]_+ = \max(0, \cdot)\) and \(g\) is a gating function (e.g., \(g(w, \nabla w) = \frac{\nabla w}{|\nabla w| + \epsilon}\)).</p>
+        <p>For edges to delete:</p>
+        <p>\[\frac{dW_{ij}}{dt} = -[\xi_{\text{del}} - \text{Load}(v_i \to v_j)]_+ \cdot \eta_{\text{del}} \cdot W_{ij}\]</p>
+        <p><strong>Benefit:</strong> Continuous formulation admits Lyapunov analysis and allows proving convergence of the coupled system (\(w, G\)) jointly.</p>
+
+        <h3>4.3 Gradient-Flow-Coupled Graph Operators</h3>
+        <p>Define the <strong>gradient-flow-coupled rewrite operator</strong> as:</p>
+        <p>\[\dot{G}(t) = \mathcal{R}^{\mathcal{L}}(G(t), \nabla_w \mathcal{L}(w, G), H(w, G), \Sigma(w, G, t))\]</p>
+        <p>Components:</p>
+        <ul>
+            <li><strong>\(\nabla_w \mathcal{L}(w, G)\):</strong> Standard loss gradients w.r.t. weights</li>
+            <li><strong>\(H(w, G)\):</strong> Activation entropies (information load)</li>
+            <li><strong>\(\Sigma(w, G, t)\):</strong> <strong>Gradient field curvature</strong>—second-order information encoding how much the gradient field is changing in different directions</li>
+        </ul>
+        <p><strong>Definition (Gradient Field Curvature):</strong> For edge \((v_i, v_j)\), the local curvature is:</p>
+        <p>\[\kappa_{ij}(t) = \left\| \text{Hess}_{W_{ij}} \mathcal{L} \right\|_F\]</p>
+        <p>High curvature indicates the loss landscape is sharply curved in that weight direction—useful information is there, and small changes have large impact.</p>
+        <p><strong>Design principle:</strong> Structural mutations are more aggressive when gradient curvature is low (flat regions, less information) and conservative when curvature is high (sharp regions, fine-tuning regime).</p>
+
+        <h2 id="dynamics">5. Dynamical Systems Interpretation</h2>
+        
+        <h3>5.1 Coupled ODE System</h3>
+        <p>The coupled training dynamics can be written as:</p>
+        <p>\[\begin{cases} \dot{w}(t) = -\eta(t) \nabla_w \mathcal{L}(w, G(t)) \\ \dot{G}(t) = \mathcal{R}^{\mathcal{L}}(G(t), \nabla_w \mathcal{L}(w, G), H(w, G), \kappa(t)) \end{cases}\]</p>
+        <p>This is a <strong>two-timescale dynamical system</strong> if the topology evolution is much slower than weight updates. Let \(\delta\) be the ratio:</p>
+        <p>\[\delta = \frac{\text{timescale of weight updates}}{\text{timescale of topology evolution}}\]</p>
+        <p>Typical regime: \(\delta \ll 1\) (weights update fast, topology evolves slowly).</p>
+
+        <h3>5.2 Two-Timescale Analysis</h3>
+        <p>In the limit \(\delta \to 0\), we can apply averaging theory:</p>
+        <p><strong>Theorem 5.1 (Slow-Fast Decomposition):</strong> If \(\delta\) is sufficiently small, the trajectory of \((w(t), G(t))\) can be decomposed into:</p>
+        <ol>
+            <li><strong>Fast dynamics (weight updates):</strong> \(\dot{w} \approx -\eta \nabla_w \mathcal{L}(w, G^*)\) where \(G^*\) is the "frozen" topology at the current timescale</li>
+            <li><strong>Slow dynamics (topology evolution):</strong> \(\dot{G} = \mathcal{R}^{\mathcal{L}}(G, w^*(G), H, \kappa)\) where \(w^*(G)\) are the weights converged to given topology \(G\)</li>
+        </ol>
+        <p>Thus, the full system tracks a sequence of quasi-stationary states: the weight optimization reaches a local minimum for the current topology, then the topology shifts, triggering re-optimization.</p>
+        <p><strong>Consequence:</strong> Stability analysis can proceed in two steps:</p>
+        <ol>
+            <li>Prove convergence of weights to critical points given fixed \(G\)</li>
+            <li>Prove that topology rewrites do not destabilize weight convergence</li>
+        </ol>
+
+        <h3>5.3 Bifurcation and Regime Transitions</h3>
+        <p>As training progresses, the system may undergo bifurcations:</p>
+        <ul>
+            <li><strong>Early training:</strong> Topology is highly unstable; rewrites are frequent (high gradient variance, broad spread of loads)</li>
+            <li><strong>Mid training:</strong> Equilibrium topology emerges; rewrites become selective</li>
+            <li><strong>Late training (fine-tuning):</strong> Topology stabilizes; rewrites rare (high gradient curvature, low entropy)</li>
+        </ul>
+        <p><strong>Definition (Structural Stability Index):</strong> Quantify the stability of the current topology:</p>
+        <p>\[\mathcal{S}_t = \frac{\text{number of edges with } \text{Load} \in [\xi_{\text{del}}, \xi_{\text{ins}}]}}{\text{total edges}}\]</p>
+        <p>High \(\mathcal{S}_t\): many edges are "marginal" (close to insertion/deletion thresholds)—topology is fragile.</p>
+        <p>Low \(\mathcal{S}_t\): edges are either clearly important or clearly unimportant—topology is robust.</p>
+        <p><strong>Scheduling principle:</strong> Decrease rewrite activity as \(\mathcal{S}_t \to 0\) (topology hardens) and \(t \to T_{\text{final}}\) (fine-tuning regime). Use adaptive thresholds:</p>
+        <p>\[\xi_{\text{del}}(t) = \xi_{\text{del}}^{(0)} \cdot (1 + \alpha_d t) ^{-1}\]</p>
+        <p>\[\xi_{\text{ins}}(t) = \xi_{\text{ins}}^{(0)} \cdot (1 + \alpha_i t) ^{-1}\]</p>
+
+        <h2 id="info-theory">6. Information-Theoretic Interpretation</h2>
+        
+        <h3>6.1 Entropy of Network Activations</h3>
+        <p>The activations across neurons form a discrete distribution. For neuron \(v_i\), histogram the activations over a minibatch:</p>
+        <p>\[H_i = -\sum_{b} \hat{p}_{ib} \log \hat{p}_{ib}\]</p>
+        <p>where \(\hat{p}_{ib}\) is the empirical frequency of binned activation values.</p>
+        <p><strong>Interpretation:</strong></p>
+        <ul>
+            <li>High entropy: neuron fires variably across inputs—it carries task-relevant information</li>
+            <li>Low entropy: neuron is constant or nearly so—it either hasn't learned or is redundant</li>
+        </ul>
+
+        <h3>6.2 Mutual Information Between Layers</h3>
+        <p>Define mutual information between consecutive layers:</p>
+        <p>\[I(Z_{\ell}; Z_{\ell+1}) = H(Z_{\ell}) + H(Z_{\ell+1}) - H(Z_{\ell}, Z_{\ell+1})\]</p>
+        <p><strong>Information bottleneck perspective:</strong> Layers with low mutual information to subsequent layers are "lossy"—they discard information. In self-rewriting architectures, such layers might be candidates for insertion of new structure (to preserve information) or deletion (if the discarded information is redundant).</p>
+
+        <h3>6.3 Gradient Entropy</h3>
+        <p>The gradients themselves form a distribution. Define:</p>
+        <p>\[H_{\text{grad}}(t) = -\sum_{\text{edge } e} \hat{p}(e) \log \hat{p}(e)\]</p>
+        <p>where \(\hat{p}(e)\) is the normalized magnitude of \(\nabla_e \mathcal{L}\) across all edges.</p>
+        <p><strong>Interpretation:</strong></p>
+        <ul>
+            <li>High gradient entropy: learning signal is spread across many edges—architecture is redundant or needs specialization</li>
+            <li>Low gradient entropy: learning is concentrated on few edges—architecture is efficiently using available parameters</li>
+        </ul>
+        <p><strong>Rewrite decision:</strong> When \(H_{\text{grad}}\) is high, prioritize deletion of low-gradient edges and insertion of structure in high-gradient regions, to concentrate capacity.</p>
+
+        <h2 id="algo">7. Algorithm Design</h2>
+        
+        <h3>7.1 High-Level Algorithm</h3>
+        <pre><code>Algorithm 1: Self-Rewriting Neural Network Training
+
+Input:
+  - Training data D_train, validation data D_val
+  - Initial network G_0, weights w_0
+  - Learning rate schedule η(t)
+  - Rewrite schedule: κ_ins(t), κ_del(t), K_max(t)
+  - Thresholds: ξ_ins^(0), ξ_del^(0), ν_add, ν_rem
+  - Maximum epochs T
+
+Initialize:
+  G ← G_0, w ← w_0
+  t ← 0
+
+Main loop:
+  for epoch in 1 to T:
+    for minibatch (x, y) in D_train:
+      // Forward pass
+      a ← forward(x, w, G)
+      L ← loss(a, y)
+      
+      // Backward pass (standard)
+      δ ← backward(L, a, w, G)
+      grad_w ← compute_gradients(δ, a)
+      
+      // Compute metrics for rewriting
+      H ← compute_entropies(a, across_minibatch)
+      Load ← compute_loads(grad_w, H, G)
+      κ ← estimate_curvature(grad_w)
+      
+      // Weight update
+      w ← w - η(t) * grad_w
+      
+      // Topology rewriting (selective, with probability)
+      if rand() < κ_rewrite(t):  // Schedule controls frequency
+        
+        // Compute rewrite potentials
+        Φ_ins ← compute_insertion_potentials(grad_w, H, G)
+        Φ_del ← compute_deletion_potentials(Load, G)
+        
+        // Rank and apply rewrites (up to K_max(t))
+        rewrites ← []
+        
+        for (v_i, v_j) NOT in E:
+          if Φ_ins(v_i, v_j) > κ_ins(t):
+            rewrites.append(('insert', v_i, v_j, priority=Φ_ins(...)))
+        
+        for (v_i, v_j) in E:
+          if Load(v_i, v_j) < κ_del(t):
+            rewrites.append(('delete', v_i, v_j, priority=Φ_del(...)))
+        
+        rewrites.sort(by_priority=descending)
+        applied ← 0
+        
+        for (op, v_i, v_j, _) in rewrites:
+          if applied ≥ K_max(t):
+            break
+          
+          if op == 'insert':
+            if is_valid_insertion(v_i, v_j, G):
+              E ← E ∪ {(v_i, v_j)}
+              W_{ij} ← sample(Normal(0, ε))  // Small init
+              applied ← applied + 1
+          
+          elif op == 'delete':
+            if is_valid_deletion(v_i, v_j, G):
+              E ← E \ {(v_i, v_j)}
+              W_{ij} ← None
+              applied ← applied + 1
+        
+        // Neuron-level rewrites
+        for ℓ in 0 to L-1:
+          if should_add_neuron(ℓ, H, G, ν_add):
+            v_new ← add_neuron(ℓ)
+            V ← V ∪ {v_new}
+            applied ← applied + 1
+          
+          for v_i in layer ℓ:
+            if should_remove_neuron(v_i, H, G, ν_rem):
+              remove_neuron(v_i)
+              V ← V \ {v_i}
+              applied ← applied + 1
+      
+      t ← t + 1
+    
+    // End-of-epoch validation
+    L_val ← evaluate(G, w, D_val)
+    log_metrics(L_val, G.num_nodes, G.num_edges, epoch)
+
+return G, w</code></pre>
+
+        <h3>7.2 Rewrite Decision Thresholds</h3>
+        <p>The thresholds \(\xi_{\text{ins}}\), \(\xi_{\text{del}}\) control the aggressiveness of topology changes. Strategies:</p>
+        <h4>7.2.1 Fixed Thresholds</h4>
+        <p>Use constant thresholds throughout training. Simple but may be suboptimal in different phases.</p>
+        <h4>7.2.2 Scheduled Thresholds</h4>
+        <p>Decay thresholds over training:</p>
+        <p>\[\xi_{\text{ins}}(t) = \xi_{\text{ins}}^{(0)} \exp\left(-\lambda_{\text{ins}} \frac{t}{T}\right)\]</p>
+        <p>\[\xi_{\text{del}}(t) = \xi_{\text{del}}^{(0)} \exp\left(-\lambda_{\text{del}} \frac{t}{T}\right)\]</p>
+        <p>Effect: Early training has more rewrites (exploration); late training has fewer (fine-tuning).</p>
+        <h4>7.2.3 Adaptive (Entropy-Based) Thresholds</h4>
+        <p>Thresholds respond to network state:</p>
+        <p>\[\xi_{\text{ins}}(t) = \xi_{\text{ins}}^{(0)} \cdot \mathcal{S}_t\]</p>
+        <p>where \(\mathcal{S}_t\) is the structural stability index (Section 5.3). If many edges are marginal, be conservative; if topology is stable, allow rewrites.</p>
+
+        <h3>7.3 Initialization of New Weights</h3>
+        <p>When inserting an edge or neuron, initialization is critical. <strong>Small random initialization:</strong></p>
+        <p>\[W_{ij}^{(0)} \sim \mathcal{N}\left(0, \frac{\epsilon^2}{|E|}\right)\]</p>
+        <p>with \(\epsilon \approx 10^{-3}\) to \(10^{-4}\). The small magnitude allows gradual integration—new pathways have minimal effect on loss initially, then grow as they prove useful.</p>
+        <p><strong>Neuron initialization:</strong> New neurons in hidden layers are initialized with zero or small weights to both incoming and outgoing edges, then trained from scratch.</p>
+
+        <h2 id="complexity">8. Computational Complexity Analysis</h2>
+        
+        <h3>8.1 Forward and Backward Pass Overhead</h3>
+        <p>Standard forward/backward passes scale as \(\mathcal{O}(|E|)\) with the number of edges (assuming constant feature dimensions).</p>
+        <p><strong>Topology rewriting overhead per step:</strong></p>
+        <ol>
+            <li><strong>Computing potentials:</strong> \(\mathcal{O}(|V|^2)\) for all potential edges (quadratic in node count)</li>
+            <li><strong>Computing loads:</strong> \(\mathcal{O}(|E|)\)</li>
+            <li><strong>Entropies:</strong> \(\mathcal{O}(|V| \cdot \text{minibatch size})\)</li>
+            <li><strong>Curvature (Hessian diagonal):</strong> \(\mathcal{O}(|E|)\) via forward-over-reverse AD</li>
+        </ol>
+        <p>Total: \(\mathcal{O}(|V|^2 + |E|)\) per rewrite decision, amortized over multiple training steps if rewrites are not applied every step.</p>
+
+        <h3>8.2 Graph Rewriting Cost</h3>
+        <p>Applying a rewrite (edge insertion/deletion) is \(\mathcal{O}(1)\) per operation (hash table operations on adjacency lists). If \(K_{\text{max}}\) rewrites are applied per step, cost is \(\mathcal{O}(K_{\text{max}})\).</p>
+        <p><strong>Total per-step overhead:</strong> \(\mathcal{O}(|V|^2 + K_{\text{max}})\), assuming rewrite evaluation is infrequent (e.g., every \(n_{\text{check}}\) steps).</p>
+
+        <h3>8.3 Memory Overhead</h3>
+        <p>Maintaining graph structure: \(\mathcal{O}(|V| + |E|)\) for adjacency list.</p>
+        <p>Storing metrics (loads, entropies, gradients): \(\mathcal{O}(|E| + |V|)\).</p>
+        <p>For networks with thousands of neurons and millions of edges (typical), this is modest compared to weight storage.</p>
+
+        <h3>8.4 Comparison with Static Training</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Static Network</th>
+                    <th>Self-Rewriting</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Forward pass</td>
+                    <td>\(\mathcal{O}(|E|)\)</td>
+                    <td>\(\mathcal{O}(|E(t)|)\)</td>
+                </tr>
+                <tr>
+                    <td>Backward pass</td>
+                    <td>\(\mathcal{O}(|E|)\)</td>
+                    <td>\(\mathcal{O}(|E(t)|)\)</td>
+                </tr>
+                <tr>
+                    <td>Rewrite evaluation</td>
+                    <td>—</td>
+                    <td>\(\mathcal{O}(|V|^2)\) (every \(n_{\text{check}}\) steps)</td>
+                </tr>
+                <tr>
+                    <td><strong>Total overhead</strong></td>
+                    <td><strong>—</strong></td>
+                    <td><strong>~5-15% if rewrites every 100 steps</strong></td>
+                </tr>
+            </tbody>
+        </table>
+        <p>The overhead is manageable if rewrites are not performed every step and thresholds are chosen to limit graph modifications.</p>
+
+        <h2 id="stability">9. Convergence and Stability Theory</h2>
+        
+        <h3>9.1 Convergence to Critical Points</h3>
+        <p><strong>Theorem 9.1 (Convergence of Weights Given Fixed Topology):</strong> Suppose \(G(t) = G^*\) (topology fixed) and the loss \(\mathcal{L}(w, G^*)\) satisfies the Polyak-Łojasiewicz (PL) condition:</p>
+        <p>\[\left\| \nabla_w \mathcal{L}(w, G^*) \right\|^2 \geq \mu (\mathcal{L}(w, G^*) - \mathcal{L}(w^*, G^*))\]</p>
+        <p>with \(\mu > 0\). Then gradient descent with step size \(\eta < 1/L\) (where \(L\) is smoothness constant) converges at exponential rate:</p>
+        <p>\[\mathcal{L}(w_t, G^*) - \mathcal{L}(w^*, G^*) \leq (1 - \eta \mu)^t (\mathcal{L}(w_0, G^*) - \mathcal{L}(w^*, G^*))\]</p>
+        <p><em>Proof:</em> Standard result in convex and non-convex optimization.</p>
+
+        <h3>9.2 Convergence Under Slow Topology Evolution</h3>
+        <p><strong>Theorem 9.2 (Convergence with Slow Topology Changes):</strong> Suppose:</p>
+        <ol>
+            <li>At each topology \(G_k\) (the \(k\)-th distinct graph encountered), weights converge to critical point within relative error \(\epsilon_k\)</li>
+            <li>Topology changes are infrequent: \(|G_k - G_{k+1}| \leq K_{\text{rewrites}} \ll |E_k|\)</li>
+            <li>The loss landscape \(\mathcal{L}(w, G_k)\) satisfies PL with \(\mu_k \geq \mu > 0\) for all \(k\)</li>
+            <li>Rewrite-induced loss change satisfies \(\Delta_k := |\mathcal{L}(w^*_k, G_k) - \mathcal{L}(w^*_k, G_{k+1})| \leq c \epsilon^2\) for small rewrites</li>
+        </ol>
+        <p>Then the overall training trajectory converges to a sequence of near-critical points, with cumulative error bounded:</p>
+        <p>\[\sum_{k} (\epsilon_k + \Delta_k) \leq C(T_{\text{total}}, \mu, L, K_{\text{rewrites}})\]</p>
+        <p><em>Proof sketch:</em> Use two-timescale analysis. At each topology, weights move toward a critical point. When topology changes, the new critical point is close (by Theorem 3.1), so the weight trajectory experiences bounded perturbation. Summing across all topology shifts gives overall convergence bound.</p>
+
+        <h3>9.3 Stability Under Rewriting</h3>
+        <p><strong>Theorem 9.3 (Lyapunov Stability of Rewritten Architectures):</strong> Define a Lyapunov function:</p>
+        <p>\[V(w, G) = \mathcal{L}(w, G) + \lambda_s \mathcal{C}(G)\]</p>
+        <p>where \(\mathcal{C}(G)\) is a complexity measure (e.g., number of edges or sum of weights). If rewrite operations satisfy:</p>
+        <p>\[|\mathcal{C}(G_{t+1}) - \mathcal{C}(G_t)| \leq K_{\text{rewrites}} \cdot \gamma_{\max}\] </p>
+        <p>and weight updates satisfy:</p>
+        <p>\[\mathcal{L}(w_{t+1}, G_{t+1}) \leq \mathcal{L}(w_t, G_t) - \alpha \| \nabla_w \mathcal{L} \|^2 + \beta |\mathcal{C}(G_{t+1}) - \mathcal{C}(G_t)|\]</p>
+        <p>for constants \(\alpha, \beta, \lambda_s\) chosen appropriately, then \(V(w_t, G_t)\) decreases (or stays controlled), ensuring stability.</p>
+        <p><em>Proof:</em> Similar to Lyapunov analysis of perturbed systems. The loss decrease dominates the complexity increase if rewrites are sufficiently conservative.</p>
+
+        <h3>9.4 Failure Modes and Destabilization</h3>
+        <p>Despite care, several failure modes can arise:</p>
+        <h4>9.4.1 Runaway Insertion</h4>
+        <p>If insertion thresholds are too low, edges proliferate, increasing model capacity without improvement. The network becomes over-parameterized, and convergence slows.</p>
+        <p><strong>Mitigation:</strong> Regularize by placing a cost on complexity. Add to the loss: \(\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{task}} + \lambda \cdot |E|\) or \(\lambda \cdot \sum |W_{ij}|\).</p>
+        <h4>9.4.2 Oscillatory Rewriting</h4>
+        <p>The network alternates between inserting and deleting the same edges, destabilizing training.</p>
+        <p><strong>Mitigation:</strong> Require a "grace period"—if an edge was just inserted, forbid deletion for the next \(n_{\text{grace}}\) steps. Similarly for deletion followed by insertion.</p>
+        <h4>9.4.3 Topology Divergence</h4>
+        <p>The network topology drifts so far from the initial architecture that accumulated approximation errors dominate. Loss landscapes become increasingly dissimilar.</p>
+        <p><strong>Mitigation:</strong> Use <strong>continuity constraint</strong>: bound total modification per epoch:</p>
+        <p>\[\sum_{t \in \text{epoch}} |G_t - G_{t-1}| \leq \Delta_{\max}\]</p>
+        <h4>9.4.4 Gradient Explosion at Structural Transitions</h4>
+        <p>When new edges are inserted, their gradients can spike suddenly, causing instability.</p>
+        <p><strong>Mitigation:</strong> Clip gradients of newly inserted edges for the first few steps:</p>
+        <p>\[\nabla W_{ij}^{\text{clipped}} = \text{clip}(\nabla W_{ij}, -c_{\text{new}}, c_{\text{new}})\]</p>
+        <p>where \(c_{\text{new}} < \| \nabla w_{\text{other}} \|\).</p>
+
+        <h2 id="experiments">10. Proposed Experimental Validation</h2>
+        <p><strong>Note:</strong> All experiments described below are <strong>hypothetical and proposed</strong> for future implementation. No real results are presented.</p>
+        
+        <h3>10.1 Experimental Design Principles</h3>
+        <ol>
+            <li><strong>Comparison baselines:</strong> Static architectures (ResNet, Transformer, CNN), NAS (DARTS, ENAS), NEAT on same tasks</li>
+            <li><strong>Metrics:</strong>
+                <ul>
+                    <li>Task performance (accuracy, F1, BLEU, etc.)</li>
+                    <li>Architectural evolution (depth, width, edge count over time)</li>
+                    <li>Training efficiency (convergence speed, total compute)</li>
+                    <li>Stability metrics (gradient variance, loss smoothness)</li>
+                </ul>
+            </li>
+            <li><strong>Validation sets:</strong> Hold-out validation data to assess generalization during topology evolution</li>
+        </ol>
+
+        <h3>10.2 NLP Tasks</h3>
+        <p><strong>Proposed experiments:</strong></p>
+        <h4>10.2.1 Machine Translation (Hypothetical)</h4>
+        <ul>
+            <li><strong>Dataset:</strong> WMT14 En-De (millions of parallel sentences)</li>
+            <li><strong>Baseline:</strong> Transformer (encoder-decoder), DARTS-derived architecture</li>
+            <li><strong>Hypotheses:</strong>
+                <ul>
+                    <li>Self-rewriting network discovers task-specific encoder/decoder asymmetry (e.g., decoder needs deeper attention, encoder can be shallower)</li>
+                    <li>Network inserts specialized subgraphs for rare phenomena (e.g., non-compositional phrases)</li>
+                    <li>Converges faster by eliminating capacity wasted on easy phrase pairs</li>
+                </ul>
+            </li>
+            <li><strong>Metrics:</strong> BLEU score, training wall-clock time, final architecture size</li>
+        </ul>
+        <h4>10.2.2 Question Answering (Hypothetical)</h4>
+        <ul>
+            <li><strong>Dataset:</strong> SQuAD 2.0</li>
+            <li><strong>Baseline:</strong> BERT-based fine-tuning with fixed architecture</li>
+            <li><strong>Hypotheses:</strong>
+                <ul>
+                    <li>Network specializes different layers for different question types (factual vs. reasoning)</li>
+                    <li>Self-rewriting BERT outperforms fixed BERT in few-shot settings (can adjust capacity per task)</li>
+                </ul>
+            </li>
+            <li><strong>Metrics:</strong> F1 score, EM, architecture diversity across seeds</li>
+        </ul>
+
+        <h3>10.3 Computer Vision Tasks</h3>
+        <p><strong>Proposed experiments:</strong></p>
+        <h4>10.3.1 Image Classification (Hypothetical)</h4>
+        <ul>
+            <li><strong>Datasets:</strong> CIFAR-10/100, ImageNet (32×32 up to 224×224)</li>
+            <li><strong>Baselines:</strong> ResNet-50, EfficientNet (hand-designed), DARTS</li>
+            <li><strong>Hypotheses:</strong>
+                <ul>
+                    <li>Self-rewriting network learns different depths for different spatial scales (shallow for edges, deep for textures)</li>
+                    <li>Network inserts residual blocks adaptively in regions of high gradient load</li>
+                    <li>Achieves better accuracy-efficiency trade-off than hand-designed architectures</li>
+                </ul>
+            </li>
+            <li><strong>Metrics:</strong> Top-1 accuracy, FLOPs, parameters, final architecture topology</li>
+        </ul>
+        <h4>10.3.2 Semantic Segmentation (Hypothetical)</h4>
+        <ul>
+            <li><strong>Dataset:</strong> Cityscapes</li>
+            <li><strong>Baseline:</strong> DeepLabV3+, DARTS-segmentation</li>
+            <li><strong>Hypotheses:</strong>
+                <ul>
+                    <li>Network tailors receptive field sizes per object class (large for sky/road, small for pedestrians)</li>
+                    <li>Learns asymmetric encoder/decoder structures</li>
+                </ul>
+            </li>
+            <li><strong>Metrics:</strong> mIoU, model size, inference time</li>
+        </ul>
+
+        <h3>10.4 Multimodal Tasks</h3>
+        <p><strong>Proposed experiment:</strong></p>
+        <h4>10.4.1 Vision-Language Pretraining (Hypothetical)</h4>
+        <ul>
+            <li><strong>Dataset:</strong> COCO, Conceptual Captions (millions of image-caption pairs)</li>
+            <li><strong>Baseline:</strong> CLIP-style frozen text/image encoders, learned fusion</li>
+            <li><strong>Hypotheses:</strong>
+                <ul>
+                    <li>Self-rewriting architecture discovers how many shared vs. specialized layers work best for vision/language</li>
+                    <li>Topology stabilizes into interpretable structure (vision pathway, language pathway, fusion layers)</li>
+                    <li>Enables rapid adaptation to downstream tasks by micro-adjustments to topology</li>
+                </ul>
+            </li>
+            <li><strong>Metrics:</strong> Zero-shot COCO retrieval, downstream task transfer accuracy</li>
+        </ul>
+
+        <h3>10.5 Simulation-Based Toy Models (Hypothetical)</h3>
+        <p>Before full-scale experiments, test on controlled, differentiable simulators:</p>
+        <h4>10.5.1 Synthetic Task</h4>
+        <ul>
+            <li><strong>Setup:</strong> Generate synthetic data from a known function with interpretable structure (e.g., sum of different feature interactions)</li>
+            <li><strong>Goal:</strong> Verify that self-rewriting network discovers the ground-truth architecture</li>
+            <li><strong>Metrics:</strong> Exact match of discovered architecture, convergence rate</li>
+        </ul>
+        <h4>10.5.2 Phase Diagram Exploration (Hypothetical)</h4>
+        <ul>
+            <li><strong>Vary:</strong> Dataset size \(n\), task dimensionality \(d\), data noise level</li>
+            <li><strong>Measure:</strong> Regions where self-rewriting outperforms static architectures</li>
+            <li><strong>Output:</strong> Phase diagram identifying regimes where adaptive topology is beneficial</li>
+        </ul>
+
+        <h2 id="metrics">11. Evaluation Metrics Beyond Accuracy</h2>
+        <p>Standard metrics (accuracy, loss) are insufficient. Proposed additional metrics:</p>
+        
+        <h3>11.1 Architectural Metrics</h3>
+        <p><strong>Diversity:</strong> Measure how different the final architecture is from the initial:</p>
+        <p>\[\text{Div}(G_0, G_T) = \frac{|E_0 \triangle E_T|}{|E_0 \cup E_T|}\]</p>
+        <p>(Jaccard distance of edge sets)</p>
+        <p><strong>Stability:</strong> Measure how much the topology oscillates during training:</p>
+        <p>\[\text{Stab} = \frac{1}{T} \sum_{t=1}^{T-1} \mathbb{1}[G_t \neq G_{t+1}]\]</p>
+        <p>High values indicate frequent rewrites; low values indicate stable topology.</p>
+        <p><strong>Interpretability:</strong> Assess whether discovered structures are interpretable:</p>
+        <ul>
+            <li>Do different layers learn different feature types?</li>
+            <li>Are there recognizable submodules (e.g., attention, convolution)?</li>
+            <li>Can we provide a linguistic description of the discovered topology?</li>
+        </ul>
+
+        <h3>11.2 Training Dynamics Metrics</h3>
+        <p><strong>Convergence speed:</strong> Epochs or wall-clock time to reach target loss.</p>
+        <p><strong>Stability of loss:</strong> Variance of loss across batches. Self-rewriting networks may show higher variance during structure changes, but lower variance overall if better topology is discovered.</p>
+        <p><strong>Gradient flow quality:</strong> Measure gradient signal in different layers. Self-rewriting networks should maintain balanced gradients across the architecture.</p>
+        <p>\[\text{GradFlow} = \frac{\min_{\ell} \mathbb{E}[| \nabla_{\ell} |]}{\max_{\ell} \mathbb{E}[| \nabla_{\ell} |]}\]</p>
+        <p>Values closer to 1 indicate balanced flow.</p>
+
+        <h3>11.3 Efficiency Metrics</h3>
+        <p><strong>Floating point operations (FLOPs):</strong> Total compute per sample.</p>
+        <p><strong>Parameter efficiency:</strong> Accuracy per parameter.</p>
+        <p><strong>Energy efficiency:</strong> If measured on real hardware, energy per training step.</p>
+        <p>Self-rewriting networks should achieve better efficiency if they discover right-sized architectures for tasks.</p>
+
+        <h2 id="failure">12. Failure Modes and Safety Constraints</h2>
+        
+        <h3>12.1 Divergence Due to Unbounded Insertion</h3>
+        <p><strong>Mode:</strong> If thresholds are too permissive, the network inserts edges indefinitely, growing until memory/compute is exhausted.</p>
+        <p><strong>Severity:</strong> Catastrophic—training hangs or OOMs.</p>
+        <p><strong>Prevention:</strong></p>
+        <ul>
+            <li>Hard cap on number of edges: \(|E| \leq E_{\max}\)</li>
+            <li>Complexity penalty in loss: \(\mathcal{L} + \lambda |E|\)</li>
+            <li>Conservative insertion thresholds with decreasing schedules</li>
+        </ul>
+
+        <h3>12.2 Collapse to Minimal Architecture</h3>
+        <p><strong>Mode:</strong> If deletion is too aggressive, the network prunes essential structure, losing expressivity.</p>
+        <p><strong>Severity:</strong> Mild to moderate—loss increases, but training can recover.</p>
+        <p><strong>Prevention:</strong></p>
+        <ul>
+            <li>Require minimum degree for each node: \(\deg(v) \geq 1\)</li>
+            <li>Forbid deletion if node would become isolated</li>
+            <li>Use validation-based criterion: only delete if validation loss does not worsen</li>
+        </ul>
+
+        <h3>12.3 Oscillatory Rewrites</h3>
+        <p><strong>Mode:</strong> Network alternates between inserting and deleting the same edges repeatedly.</p>
+        <p><strong>Severity:</strong> Moderate—training diverges or stagnates.</p>
+        <p><strong>Prevention:</strong></p>
+        <ul>
+            <li>Grace period: forbid opposite rewrites for \(n_{\text{grace}}\) steps</li>
+            <li>Hysteresis: require larger margin for reinsertion of deleted edge</li>
+        </ul>
+
+        <h3>12.4 Catastrophic Forgetting</h3>
+        <p><strong>Mode:</strong> Network inserts new pathways that disrupt already-learned features.</p>
+        <p><strong>Severity:</strong> Moderate—loss temporarily increases, or fine-tuned weights are overwritten.</p>
+        <p><strong>Prevention:</strong></p>
+        <ul>
+            <li>Initialize new weights near zero</li>
+            <li>Use knowledge distillation: match outputs of old and new pathways</li>
+            <li>Slow insertion rate</li>
+        </ul>
+
+        <h3>12.5 Hardware Incompatibility</h3>
+        <p><strong>Mode:</strong> Discovered architecture has irregular sparsity or branching patterns that don't map efficiently to hardware (GPUs, TPUs).</p>
+        <p><strong>Severity:</strong> Severe in practice—theoretical speedup doesn't translate to wall-clock time.</p>
+        <p><strong>Prevention:</strong></p>
+        <ul>
+            <li>Add hardware-awareness to rewrite rules (e.g., prefer block-structured sparsity)</li>
+            <li>Empirical profiling of discovered architectures on target hardware</li>
+            <li>Constrain rewrites to hardware-friendly patterns</li>
+        </ul>
+
+        <h2 id="comparison">13. Comparison Against Existing Paradigms</h2>
+        
+        <h3>13.1 vs. Neural Architecture Search (NAS)</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Aspect</th>
+                    <th>NAS</th>
+                    <th>Self-Rewriting</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Timing</strong></td>
+                    <td>Offline (search phase) then train</td>
+                    <td>Online (during training)</td>
+                </tr>
+                <tr>
+                    <td><strong>Adaptation</strong></td>
+                    <td>Single architecture for all inputs</td>
+                    <td>Can adapt per-minibatch/per-phase</td>
+                </tr>
+                <tr>
+                    <td><strong>Coupling to gradients</strong></td>
+                    <td>Weak (bilevel optimization)</td>
+                    <td>Strong (gradient field drives rewrites)</td>
+                </tr>
+                <tr>
+                    <td><strong>Computational cost</strong></td>
+                    <td>High (hundreds of GPU days)</td>
+                    <td>Modest overhead (~5-15%)</td>
+                </tr>
+                <tr>
+                    <td><strong>Interpretability</strong></td>
+                    <td>Final architecture is static, analyzable</td>
+                    <td>Trajectory of architectures visible</td>
+                </tr>
+                <tr>
+                    <td><strong>Theoretical understanding</strong></td>
+                    <td>Well-developed (bilevel optimization theory)</td>
+                    <td>Emerging (two-timescale systems)</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><strong>Advantage of self-rewriting:</strong> Can discover task-specific structures without searching the full architecture space. No search cost.</p>
+        <p><strong>Advantage of NAS:</strong> Mature, well-tested, extensive empirical validation.</p>
+
+        <h3>13.2 vs. NEAT</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Aspect</th>
+                    <th>NEAT</th>
+                    <th>Self-Rewriting</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Mechanism</strong></td>
+                    <td>Genetic algorithm (stochastic)</td>
+                    <td>Gradient-driven (deterministic)</td>
+                </tr>
+                <tr>
+                    <td><strong>Mutations</strong></td>
+                    <td>Random add neuron/connection</td>
+                    <td>Targeted by load/gradient signals</td>
+                </tr>
+                <tr>
+                    <td><strong>Fitness evaluation</strong></td>
+                    <td>Requires multiple generations</td>
+                    <td>Continuous (per-step information)</td>
+                </tr>
+                <tr>
+                    <td><strong>Convergence</strong></td>
+                    <td>No guarantees</td>
+                    <td>Convergence bounds (Theorems 9.1-9.3)</td>
+                </tr>
+                <tr>
+                    <td><strong>Computational cost</strong></td>
+                    <td>Very high (generations of parallel evaluations)</td>
+                    <td>Moderate (embedded in training)</td>
+                </tr>
+                <tr>
+                    <td><strong>Application scale</strong></td>
+                    <td>Small networks (e.g., control)</td>
+                    <td>Scalable to large networks</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><strong>Advantage of self-rewriting:</strong> Deterministic, gradient-based, proven convergence. Scalable.</p>
+        <p><strong>Advantage of NEAT:</strong> Biologically inspired, well-explored, some domains show strong results.</p>
+
+        <h3>13.3 vs. Pruning / Sparsification</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Aspect</th>
+                    <th>Pruning</th>
+                    <th>Self-Rewriting</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Direction</strong></td>
+                    <td>Removal only</td>
+                    <td>Addition + removal + rewiring</td>
+                </tr>
+                <tr>
+                    <td><strong>Criterion</strong></td>
+                    <td>Magnitude, sensitivity, heuristic</td>
+                    <td>Gradient field geometry, information load</td>
+                </tr>
+                <tr>
+                    <td><strong>Timing</strong></td>
+                    <td>Post-training or iterative schedule</td>
+                    <td>Real-time, adaptive</td>
+                </tr>
+                <tr>
+                    <td><strong>Graph modification</strong></td>
+                    <td>Sparsification (reduced edges)</td>
+                    <td>Structural reorganization</td>
+                </tr>
+                <tr>
+                    <td><strong>Recoverability</strong></td>
+                    <td>Removed weights lost</td>
+                    <td>Can recover deleted edges if needed</td>
+                </tr>
+                <tr>
+                    <td><strong>Hardware mapping</strong></td>
+                    <td>Often sparsity-efficient</td>
+                    <td>May be irregular—hardware-aware design needed</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><strong>Advantage of self-rewriting:</strong> More flexible—can add structure where needed, not just remove.</p>
+        <p><strong>Advantage of pruning:</strong> Simpler, more mature, hardware support (2:4 sparsity on Ampere GPUs).</p>
+
+        <h3>13.4 vs. Mixture of Experts / Dynamic Routing</h3>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Aspect</th>
+                    <th>MoE/Dynamic Routing</th>
+                    <th>Self-Rewriting</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Graph topology</strong></td>
+                    <td>Fixed</td>
+                    <td>Dynamic</td>
+                </tr>
+                <tr>
+                    <td><strong>Routing</strong></td>
+                    <td>Per-token expert selection</td>
+                    <td>N/A (topology changes, not routing)</td>
+                </tr>
+                <tr>
+                    <td><strong>Scalability</strong></td>
+                    <td>Parallelizable (experts independent)</td>
+                    <td>Serialized graph changes</td>
+                </tr>
+                <tr>
+                    <td><strong>Expressivity increase</strong></td>
+                    <td>Via more experts</td>
+                    <td>Via structural rewrites</td>
+                </tr>
+                <tr>
+                    <td><strong>Overhead</strong></td>
+                    <td>Gating computation</td>
+                    <td>Rewrite evaluation + application</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><strong>Advantage of self-rewriting:</strong> Discovers minimal necessary structure; not restricted to expert-based design.</p>
+        <p><strong>Advantage of MoE:</strong> Highly parallelizable, proven at scale (e.g., GShard).</p>
+
+        <h2 id="agi">14. Implications for AGI and Long-Horizon Learning</h2>
+        
+        <h3>14.1 Meta-Learning and Few-Shot Adaptation</h3>
+        <p>Self-rewriting architectures naturally enable <strong>rapid task adaptation</strong>. Given a new task with few examples:</p>
+        <ol>
+            <li>Topology starts at a <strong>meta-trained initialization</strong></li>
+            <li>During few-shot training, rewrites specialize the architecture to the specific task</li>
+            <li>Different tasks converge to different topologies, each optimized for that task's structure</li>
+        </ol>
+        <p>This provides a principled mechanism for <strong>multitask and continual learning</strong>—the network physically reorganizes itself for new tasks, rather than merely reweighting a fixed architecture.</p>
+
+        <h3>14.2 Scalability and Generalization</h3>
+        <p>Very large networks often suffer from:</p>
+        <ul>
+            <li><strong>Over-parameterization:</strong> Capacity far exceeds what's needed, leading to memorization</li>
+            <li><strong>Inefficient learning:</strong> Capacity is allocated uniformly, but tasks have structure</li>
+        </ul>
+        <p>Self-rewriting networks can:</p>
+        <ul>
+            <li>Scale to very large potential graph spaces, but realize only necessary subgraphs</li>
+            <li>Learn sparse, task-optimized architectures automatically</li>
+            <li>Potentially improve <strong>generalization</strong> by avoiding over-parameterization</li>
+        </ul>
+        <p><strong>Hypothesis:</strong> Self-rewriting networks exhibit implicit regularization through architecture-size control.</p>
+
+        <h3>14.3 Open-Ended Learning</h3>
+        <p>In open-ended learning scenarios (e.g., a robot learning from lifelong interaction), the agent faces a stream of new tasks and phenomena. Self-rewriting networks could:</p>
+        <ul>
+            <li>Insert new pathways to handle novel inputs</li>
+            <li>Maintain learned structure for familiar tasks</li>
+            <li>Gradually discover task-specific decompositions</li>
+        </ul>
+        <p>This mirrors biological neural plasticity—the brain physically rewires in response to experience.</p>
+
+        <h3>14.4 Interpretability Through Structural Evolution</h3>
+        <p>The <strong>trajectory of topologies</strong> provides an interpretable record of what structures the network deemed necessary. Visualizing this trajectory could reveal:</p>
+        <ul>
+            <li>Which features emerge early vs. late</li>
+            <li>Which layers specialize for different inputs</li>
+            <li>How task structure is encoded in topology</li>
+        </ul>
+        <p>This may help crack the <strong>interpretability problem</strong> in deep learning.</p>
+
+        <h2 id="limitations">15. Limitations and Open Questions</h2>
+        
+        <h3>15.1 Theoretical Limitations</h3>
+        <ol>
+            <li><strong>Two-timescale analysis assumes separation.</strong> In practice, \(\delta = O(1/\sqrt{T})\) (not infinitesimal), so the slow-fast decomposition is approximate.</li>
+            <li><strong>PL condition is restrictive.</strong> Not all losses satisfy PL (e.g., pure classification losses on realistic datasets). Convergence guarantees may not apply universally.</li>
+            <li><strong>Gradient curvature estimation is expensive.</strong> Computing full Hessian is \(\mathcal{O}(|E|^2)\). Diagonal approximation or sampling is needed, introducing error.</li>
+            <li><strong>No finite-time guarantees for topology convergence.</strong> Theorems bound loss decrease but not the speed of topology stabilization.</li>
+        </ol>
+
+        <h3>15.2 Algorithmic Limitations</h3>
+        <ol>
+            <li><strong>Threshold selection is empirical.</strong> Choosing \(\xi_{\text{ins}}, \xi_{\text{del}}, \nu_{\text{add}}, \nu_{\text{rem}}\) requires tuning. No principled, universal choice exists.</li>
+            <li><strong>Grace periods and limits are ad-hoc.</strong> \(n_{\text{grace}}, K_{\max}\) require manual specification; optimal values likely task-dependent.</li>
+            <li><strong>Entropies are estimated from finite minibatches.</strong> Estimates are noisy, especially early in training or with small minibatches.</li>
+            <li><strong>Continuity constraints are loose.</strong> Bounding total modification per epoch does not prevent bad intermediate states.</li>
+        </ol>
+
+        <h3>15.3 Computational Limitations</h3>
+        <ol>
+            <li><strong>Quadratic cost in node count.</strong> Computing insertion potentials requires \(\mathcal{O}(|V|^2)\) comparisons. For very large networks, this is prohibitive.</li>
+            <li><strong>Memory overhead.</strong> Storing gradient history, entropy estimates, load values adds memory.</li>
+            <li><strong>Synchronization overhead.</strong> Topology changes require synchronization across distributed workers (if training is distributed), potentially causing communication bottlenecks.</li>
+        </ol>
+
+        <h3>15.4 Fundamental Open Questions</h3>
+        <ol>
+            <li><strong>Under what conditions is topology evolution beneficial?</strong> Not all tasks benefit from architectural adaptation. Identifying the regime is an open problem.</li>
+            <li><strong>Can we prove convergence without strong assumptions (PL)?</strong> Extending theory to weakly convex or non-convex smooth losses is important.</li>
+            <li><strong>How to design rewrite rules more principally?</strong> Current rules are heuristic. A systematic framework for deriving rules from first principles is needed.</li>
+            <li><strong>Can self-rewriting networks avoid catastrophic forgetting?</strong> The problem of maintaining old knowledge while learning new structure is not fully solved.</li>
+            <li><strong>What is the relationship between topology evolution and implicit bias?</strong> Do self-rewriting networks have implicit biases toward sparse, hierarchical structures?</li>
+            <li><strong>How to make self-rewriting networks hardware-efficient?</strong> Irregular sparsity and dynamic graphs don't map naturally to current hardware. New hardware or compilation strategies needed.</li>
+        </ol>
+
+        <h2 id="conclusion">16. Conclusion</h2>
+        <p>We have introduced a foundational theoretical framework for <strong>self-rewriting neural architectures</strong>—networks that dynamically modify their computational graph topology during training, guided by gradient field geometry and information-theoretic load indicators.</p>
+        
+        <h3>16.1 Key Contributions</h3>
+        <ol>
+            <li><strong>Novel paradigm:</strong> Formalized the concept of gradient-driven, real-time architectural self-modification, distinct from and complementary to NAS, NEAT, pruning, and MoE.</li>
+            <li><strong>Mathematical foundations:</strong> Developed graph rewrite algebra, two-timescale dynamical systems analysis, and stability theorems bounding topology evolution.</li>
+            <li><strong>Practical algorithms:</strong> Presented concrete rewrite rules, threshold schedules, and coupling mechanisms for integrating topology evolution into standard gradient descent training.</li>
+            <li><strong>Theoretical guarantees:</strong> Proved convergence under controlled rewriting (Theorems 9.1-9.3), characterized failure modes, and identified mitigation strategies.</li>
+            <li><strong>Experimental framework:</strong> Proposed comprehensive validation protocols across NLP, vision, and multimodal domains, with detailed metrics for assessing both performance and architectural evolution.</li>
+        </ol>
+
+        <h3>16.2 Impact and Future Directions</h3>
+        <p><strong>Short-term (1-3 years):</strong></p>
+        <ul>
+            <li>Implement simplified versions of the framework on small-scale tasks (CIFAR-10, SQuAD)</li>
+            <li>Validate key theoretical predictions (convergence, stability)</li>
+            <li>Develop practical threshold selection strategies</li>
+            <li>Explore hardware-friendly rewrite rules</li>
+        </ul>
+        <p><strong>Medium-term (3-5 years):</strong></p>
+        <ul>
+            <li>Scale to realistic large-scale tasks and datasets</li>
+            <li>Integrate with distributed training frameworks</li>
+            <li>Develop interpretability tools for visualizing topology evolution</li>
+            <li>Apply to continual and few-shot learning</li>
+        </ul>
+        <p><strong>Long-term (5+ years):</strong></p>
+        <ul>
+            <li>Unify self-rewriting with other adaptive mechanisms (hypernetworks, meta-learning, continual learning)</li>
+            <li>Develop theoretical understanding of when topology evolution is beneficial</li>
+            <li>Explore applications to robotics, autonomous learning, and scientific discovery</li>
+            <li>Investigate connections to biological neural plasticity</li>
+        </ul>
+
+        <h3>16.3 Broader Significance</h3>
+        <p>This work positions <strong>adaptive topology</strong> as a fundamental mechanism for neural computation—complementary to weight adaptation. Just as organisms evolve not just their behaviors (weights) but their neural structures (topology), artificial networks should be able to reorganize themselves. This opening may unlock new capabilities in generalization, efficiency, interpretability, and long-horizon learning that fixed-architecture networks cannot achieve.</p>
+
+        <div class="footer">
+            <p><strong>Author:</strong> Anamitra Sarkar</p>
+            <p><strong>Published:</strong> 2025</p>
+            <p><strong>Environment:</strong> Theoretical Research</p>
+        </div>
+    </div>
+</body>
+</html>
