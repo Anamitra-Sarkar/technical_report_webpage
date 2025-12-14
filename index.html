@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Publications Portal</title>
-    <!-- ... existing styles ... -->
     <style>
         /* --- CSS Variables for Theming --- */
         :root {
@@ -494,7 +493,90 @@
             .header-content { padding: 0 20px; }
         }
     </style>
-    <!-- ... existing scripts ... -->
+</head>
+<body>
+
+    <!-- Loader -->
+    <div class="loader-container" id="loader">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">Research Portal</div>
+            <div class="nav-group">
+                <nav class="nav-links">
+                    <a href="#papersGrid">Papers</a>
+                    <a href="#about">About</a>
+                    <a href="#contact">Contact</a>
+                </nav>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
+                    <!-- Icon SVGs injected via JS -->
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1 class="hero-title">Technical Research</h1>
+        <p class="hero-subtitle">
+            Exploring cutting-edge AI architectures, optimization techniques, and practical implementations for resource-constrained environments.
+        </p>
+    </section>
+
+    <!-- Papers Grid -->
+    <section class="papers-grid" id="papersGrid">
+        <!-- Cards injected via JS -->
+    </section>
+
+    <!-- About Section -->
+    <section class="content-section" id="about">
+        <h2 class="section-title">About This Research</h2>
+        <p class="section-text">
+            This portal aggregates technical deep-dives into modern Deep Learning architectures. The focus is on bridging the gap between theoretical research and practical engineering, specifically for environments with limited compute resources (consumer GPUs, Edge devices).
+        </p>
+        <p class="section-text">
+            Current research areas include Quantization (4-bit/8-bit), Dynamic Neural Architectures, and Efficient Transformers.
+        </p>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="content-section" id="contact">
+        <h2 class="section-title">Contact</h2>
+        <p class="section-text">
+            Interested in collaboration or have questions about the implementations?
+        </p>
+        <a href="mailto:research@example.com" class="contact-btn">Get in Touch</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 Research Publications. Advancing AI research.</p>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Title</h2>
+                <div class="modal-actions">
+                    <button class="modal-btn" id="downloadBtn"><span>📥</span> PDF</button>
+                    <button class="close-btn" id="closeModal">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="article-content" id="modalContent">
+                    <!-- Dynamic Content -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         // --- Data ---
