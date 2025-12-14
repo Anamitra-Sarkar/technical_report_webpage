@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Research Publications Portal</title>
+    <!-- ... existing styles ... -->
     <style>
         /* --- CSS Variables for Theming --- */
         :root {
@@ -493,91 +494,7 @@
             .header-content { padding: 0 20px; }
         }
     </style>
-</head>
-<body>
-
-    <!-- Loader -->
-    <div class="loader-container" id="loader">
-        <div class="loader"></div>
-    </div>
-
-    <!-- Header -->
-    <header>
-        <div class="header-content">
-            <div class="logo">Research Portal</div>
-            <div class="nav-group">
-                <nav class="nav-links">
-                    <a href="#papersGrid">Papers</a>
-                    <a href="#about">About</a>
-                    <a href="#contact">Contact</a>
-                </nav>
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle Theme">
-                    <!-- Icon SVGs -->
-                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Hero -->
-    <section class="hero">
-        <h1 class="hero-title">Technical Research</h1>
-        <p class="hero-subtitle">
-            Exploring cutting-edge AI architectures, optimization techniques, and practical implementations for resource-constrained environments.
-        </p>
-    </section>
-
-    <!-- Papers Grid -->
-    <section class="papers-grid" id="papersGrid">
-        <!-- Cards injected via JS -->
-    </section>
-
-    <!-- About Section -->
-    <section class="content-section" id="about">
-        <h2 class="section-title">About This Research</h2>
-        <p class="section-text">
-            This portal aggregates technical deep-dives into modern Deep Learning architectures. The focus is on bridging the gap between theoretical research and practical engineering, specifically for environments with limited compute resources (consumer GPUs, Edge devices).
-        </p>
-        <p class="section-text">
-            Current research areas include Quantization (4-bit/8-bit), Dynamic Neural Architectures, and Efficient Transformers.
-        </p>
-    </section>
-
-    <!-- Contact Section -->
-    <section class="content-section" id="contact">
-        <h2 class="section-title">Contact</h2>
-        <p class="section-text">
-            Interested in collaboration or have questions about the implementations?
-        </p>
-        <a href="mailto:research@example.com" class="contact-btn">Get in Touch</a>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <div class="footer-content">
-            <p>© 2025 Research Publications. Advancing AI research.</p>
-        </div>
-    </footer>
-
-    <!-- Modal -->
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title" id="modalTitle">Title</h2>
-                <div class="modal-actions">
-                    <button class="modal-btn" id="downloadBtn"><span>📥</span> PDF</button>
-                    <button class="close-btn" id="closeModal">&times;</button>
-                </div>
-            </div>
-            <div class="modal-body">
-                <div class="article-content" id="modalContent">
-                    <!-- Dynamic Content -->
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
+    <!-- ... existing scripts ... -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script>
         // --- Data ---
@@ -623,8 +540,8 @@
                 fileName: 'tech_report2.html',
                 title: 'Advanced GPU Optimization',
                 badge: 'Research Paper',
-                excerpt: 'Exploring CUDA memory management and kernel fusion strategies. (Coming Soon)',
-                date: 'Future',
+                excerpt: 'Exploring CUDA memory management and kernel fusion strategies.',
+                date: 'Oct 2025', // Updated date
                 readTime: '20 min'
             }
         ];
@@ -635,44 +552,50 @@
             renderGrid();
             setupModal();
             setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+                const loader = document.getElementById('loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.display = 'none', 500);
+                }
             }, 800);
         });
 
         // --- Theme Logic ---
         function initTheme() {
             const toggle = document.getElementById('themeToggle');
+            if (!toggle) return;
+            
             const html = document.documentElement;
-            const icon = toggle.querySelector('svg');
             
             // Check local storage or default to dark
             const savedTheme = localStorage.getItem('theme') || 'dark';
             html.setAttribute('data-theme', savedTheme);
-            updateIcon(savedTheme);
+            updateIcon(savedTheme, toggle);
 
             toggle.addEventListener('click', () => {
                 const current = html.getAttribute('data-theme');
                 const next = current === 'dark' ? 'light' : 'dark';
                 html.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
-                updateIcon(next);
+                updateIcon(next, toggle);
             });
+        }
 
-            function updateIcon(theme) {
-                if(theme === 'light') {
-                    // Moon icon for light mode
-                    toggle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-                } else {
-                    // Sun icon for dark mode
-                    toggle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-                }
+        function updateIcon(theme, toggle) {
+            if (!toggle) return;
+            if(theme === 'light') {
+                // Moon icon for light mode
+                toggle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+            } else {
+                // Sun icon for dark mode
+                toggle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
             }
         }
 
         // --- Grid Logic ---
         async function renderGrid() {
             const grid = document.getElementById('papersGrid');
+            if (!grid) return;
             
             for (const paper of papers) {
                 // Determine availability (Simulation)
@@ -712,6 +635,8 @@
             const contentDiv = document.getElementById('modalContent');
             const title = document.getElementById('modalTitle');
 
+            if (!modal || !contentDiv || !title) return;
+
             title.textContent = paper.title;
             contentDiv.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">Loading...</div>';
             
@@ -749,6 +674,8 @@
             const closeBtn = document.getElementById('closeModal');
             const downloadBtn = document.getElementById('downloadBtn');
 
+            if (!modal || !closeBtn || !downloadBtn) return;
+
             const close = () => {
                 modal.classList.remove('active');
                 document.body.style.overflow = '';
@@ -765,6 +692,7 @@
 
             downloadBtn.addEventListener('click', () => {
                 const element = document.getElementById('modalContent');
+                if (!element) return;
                 const opt = {
                     margin: 0.5,
                     filename: `${currentPaper.id}.pdf`,
