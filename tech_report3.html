@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding RNNs, LSTMs, GRUs, and Transformers - Research Guide</title>
+    <style>
+        /* Core Design System */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+            line-height: 1.8;
+            color: #e0e0e0;
+            background: #0a0a0a;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .paper-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Typography Hierarchy */
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #ffffff;
+            letter-spacing: -1px;
+        }
+        
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 56px 0 24px 0;
+            color: #00d4ff; /* Cyan Accent */
+            letter-spacing: -0.5px;
+            border-bottom: 2px solid #2a2a2a;
+            padding-bottom: 12px;
+        }
+        
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 36px 0 16px 0;
+            color: #00ff88; /* Green Accent */
+        }
+        
+        h4 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            color: #ffffff;
+        }
+        
+        p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 20px 0 20px 30px;
+            color: #b0b0b0;
+        }
+        
+        li {
+            margin-bottom: 12px;
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Code & ASCII Art Styling */
+        code {
+            background: #1a1a1a;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+            color: #00d4ff;
+        }
+
+        pre {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 24px 0;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #e0e0e0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Custom Components */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(0, 255, 136, 0.05));
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+
+        .toc {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin: 16px 0 0 0;
+        }
+        
+        .toc li {
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        .toc li:last-child {
+            border-bottom: none;
+        }
+
+        .toc a {
+            color: #b0b0b0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: #00d4ff;
+        }
+
+        /* Tables for Mathematical Comparisons */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 32px 0;
+            background: #161616;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        th {
+            background: #1f1f1f;
+            color: #00d4ff;
+            font-weight: 600;
+        }
+
+        td {
+            color: #b0b0b0;
+            font-size: 15px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Math Styling (Lightweight) */
+        .math {
+            font-family: 'Times New Roman', serif;
+            font-style: italic;
+            color: #ffd700;
+        }
+
+        .highlight-box {
+            background: #1a1a1a;
+            border-left: 4px solid #00d4ff;
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 2px solid #2a2a2a;
+            text-align: center;
+            color: #707070;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="paper-container">
+        <h1>Understanding RNNs, LSTMs, GRUs, and Transformers: A Complete 2025 Guide</h1>
+        
+        <div class="summary-box">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Abstract</h2>
+            <p>The journey from basic Recurrent Neural Networks to sophisticated Transformers represents one of the most significant evolutions in deep learning. This guide explores the mathematical foundations, architectural trade-offs, and practical use cases of sequence models. While Transformers currently dominate, recurrent architectures like LSTMs and GRUs remain critical for resource-constrained edge environments.</p>
+        </div>
+        
+        <div class="toc">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Contents</h2>
+            <ul>
+                <li><a href="#intro">1. Introduction: The Evolution of Sequence Models</a></li>
+                <li><a href="#rnn">2. RNN Architecture: The Foundation</a></li>
+                <li><a href="#lstm">3. LSTM Architecture: Solving the Memory Problem</a></li>
+                <li><a href="#gru">4. GRU Architecture: Streamlined Recurrence</a></li>
+                <li><a href="#transformers">5. Transformers: The Attention Revolution</a></li>
+                <li><a href="#math">6. Mathematical Comparisons</a></li>
+                <li><a href="#code">7. Code Examples (PyTorch)</a></li>
+                <li><a href="#benchmarks">8. Benchmark Comparison & Real World Use</a></li>
+                <li><a href="#conclusion">9. Conclusion</a></li>
+            </ul>
+        </div>
+
+        <h2 id="intro">1. Introduction: The Evolution of Sequence Models</h2>
+        <h3>Why Sequence Models Are Essential</h3>
+        <p>Traditional neural networks process inputs independently. However, many real-world problems involve <strong>sequential data</strong> where context and order matter fundamentally. Sequence models address this by maintaining memory of previous inputs, allowing them to capture temporal dependencies.</p>
+
+        <h3>Historical Evolution</h3>
+        <p>In the late 1980s, <strong>RNNs</strong> emerged but suffered from vanishing gradients. In 1997, <strong>LSTMs</strong> revolutionized the field with gating mechanisms. In 2014, <strong>GRUs</strong> offered a more efficient alternative. Finally, in 2017, <strong>Transformers</strong> eliminated recurrence entirely, relying on self-attention for massive scalability.</p>
+
+        <h2 id="rnn">2. RNN Architecture: The Foundation</h2>
+        <p>A Recurrent Neural Network processes data sequentially while maintaining a hidden state. However, the same weights are shared across all time steps.</p>
+
+        <h3>Visualizing Recurrence</h3>
+        <pre><code>RNN UNROLLED OVER TIME
+======================
+Input:     x(t-2)      x(t-1)       x(t)        x(t+1)
+            |            |           |            |
+            v            v           v            v
+         +-----+      +-----+     +-----+      +-----+
+h(t-2)-->| RNN |----->| RNN |---->| RNN |----->| RNN |---> h(t+1)
+         +-----+      +-----+     +-----+      +-----+
+            |            |           |            |
+            v            v           v            v
+         y(t-2)       y(t-1)       y(t)        y(t+1)</code></pre>
+
+        <h3>The Vanishing Gradient Problem</h3>
+        <p>During backpropagation through time (BPTT), gradients are computed by multiplying derivatives across many time steps. If the recurrent weight eigenvalue is less than 1, gradients shrink exponentially. This limits standard RNNs to learning dependencies of only 10-15 time steps.</p>
+
+        <h2 id="lstm">3. LSTM Architecture: Solving the Memory Problem</h2>
+        <p>LSTMs introduce a <strong>cell state</strong> that acts as a highway for information flow, regulated by three gates: Forget, Input, and Output.</p>
+
+        <h3>LSTM Cell Structure</h3>
+        <pre><code>LSTM CELL ARCHITECTURE
+======================
+                    +-------------------+
+                    | Cell State (C_t-1)|
+                    +-------------------+
+                            |
+         +------------------v-----------------------+
+         |          FORGET GATE (f_t)               |
+         | f_t = σ(W_f·[h_t-1, x_t] + b_f)          |
+         +------------------v-----------------------+
+                            |
+         +------------------v-----------------------+
+         |    CELL STATE UPDATE (C_t)               |
+         | C_t = f_t ⊙ C_t-1 + i_t ⊙ C̃_t           |
+         +------------------v-----------------------+
+                            |
+                    +-------------------+
+                    | Hidden State (h_t)|
+                    +-------------------+</code></pre>
+
+        <h3>Core Advantage</h3>
+        <p>The element-wise multiplication in the cell state update allows the network to maintain a constant error flow during backpropagation. This effectively solves the vanishing gradient problem, allowing LSTMs to capture long-term dependencies spanning hundreds of time steps.</p>
+
+        <h2 id="gru">4. GRU Architecture: Streamlined Recurrence</h2>
+        <p>Gated Recurrent Units (2014) simplify the LSTM by combining the forget and input gates into a single <strong>Update Gate</strong> and merging the cell state and hidden state.</p>
+
+        <h3>GRU vs LSTM</h3>
+        <ul>
+            <li><strong>Reset Gate (r):</strong> Determines how much past information to forget.</li>
+            <li><strong>Update Gate (z):</strong> Determines how much of the new information to add.</li>
+            <li><strong>Efficiency:</strong> GRUs have fewer parameters than LSTMs (2 gates vs 3 gates), making them faster to train and more memory efficient, often with comparable performance on smaller datasets.</li>
+        </ul>
+
+        <h2 id="transformers">5. Transformers: The Attention Revolution</h2>
+        <p>Transformers discard recurrence entirely. Instead of processing tokens sequentially (O(N)), they process the entire sequence in parallel using the <strong>Self-Attention Mechanism</strong>.</p>
+
+        <div class="highlight-box">
+            <h3 style="margin-top: 0;">The Attention Mechanism</h3>
+            <p>Attention calculates importance weights for every token relative to every other token. It is often described as a soft dictionary lookup:</p>
+            <p style="font-size: 20px; text-align: center; color: #ffd700;">Attention(Q, K, V) = softmax(QK<sup>T</sup> / √d<sub>k</sub>)V</p>
+            <ul>
+                <li><strong>Query (Q):</strong> What am I looking for?</li>
+                <li><strong>Key (K):</strong> What do I have?</li>
+                <li><strong>Value (V):</strong> What is the actual content?</li>
+            </ul>
+        </div>
+
+        <h3>Positional Encoding</h3>
+        <p>Since Transformers have no inherent sense of order (unlike RNNs), sinusoidal positional encodings are added to the input embeddings to inject information about the relative or absolute position of tokens in the sequence.</p>
+
+        <h2 id="math">6. Mathematical Comparisons</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>RNN</th>
+                    <th>LSTM</th>
+                    <th>Transformer</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Complexity per Layer</strong></td>
+                    <td>O(N · d²)</td>
+                    <td>O(N · d²)</td>
+                    <td>O(N² · d)</td>
+                </tr>
+                <tr>
+                    <td><strong>Sequential Operations</strong></td>
+                    <td>O(N)</td>
+                    <td>O(N)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td><strong>Max Path Length</strong></td>
+                    <td>O(N)</td>
+                    <td>O(N)</td>
+                    <td>O(1)</td>
+                </tr>
+                <tr>
+                    <td><strong>Parameters</strong></td>
+                    <td>Minimal</td>
+                    <td>4 × RNN</td>
+                    <td>Depends on Layers/Heads</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><em>N = Sequence Length, d = Representation Dimension</em></p>
+
+        <h2 id="code">7. Code Examples (PyTorch)</h2>
+        
+        <h3>RNN/LSTM Implementation</h3>
+        <pre><code>import torch
+import torch.nn as nn
+
+class LSTMModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
+        super(LSTMModel, self).__init__()
+        
+        # LSTM Layer
+        # batch_first=True expects input shape: (batch, seq_len, features)
+        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+        
+        # Readout layer
+        self.fc = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        # Initialize hidden state with zeros
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(device)
+        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(device)
+        
+        # Forward pass
+        out, (hn, cn) = self.lstm(x, (h0, c0))
+        
+        # Decode the hidden state of the last time step
+        out = self.fc(out[:, -1, :])
+        return out</code></pre>
+
+        <h3>Transformer Implementation</h3>
+        <pre><code>import torch.nn as nn
+
+class TransformerModel(nn.Module):
+    def __init__(self, vocab_size, d_model, nhead, num_layers):
+        super(TransformerModel, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, d_model)
+        
+        # Transformer Encoder Layer
+        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=nhead)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+        
+        self.fc = nn.Linear(d_model, vocab_size)
+
+    def forward(self, x):
+        x = self.embedding(x)
+        # Transformers expect (seq_len, batch, feature) by default unless batch_first=True
+        output = self.transformer_encoder(x)
+        return self.fc(output)</code></pre>
+
+        <h2 id="benchmarks">8. Benchmark Comparison & Real World Use</h2>
+        
+        <h3>When to use what?</h3>
+        <ul>
+            <li><strong>Use Transformers when:</strong> You have a large dataset, access to GPUs (like A100s or T4s on Colab), and need to capture global dependencies in long sequences (e.g., Translation, Code Generation).</li>
+            <li><strong>Use LSTMs/GRUs when:</strong> You are deploying on edge devices (IoT, Mobile), have very limited RAM (like your 4GB setup), or deal with simple time-series forecasting where local context matters more than global context.</li>
+        </ul>
+
+        <h3>Memory Footprint</h3>
+        <p>Transformers suffer from <strong>Quadratic Memory Complexity</strong> regarding sequence length (O(N²)). This means doubling the text length quadruples the memory required. Recurrent models scale linearly (O(N)), making them far more memory-efficient for extremely long sequences on CPU-only or low-RAM environments.</p>
+
+        <h2 id="conclusion">9. Conclusion</h2>
+        <p>While Transformers have captured the spotlight with models like GPT-4 and Claude, the LSTM remains a remarkably efficient engineer's tool. Understanding the evolution from "How do we remember?" (RNN/LSTM) to "What should we pay attention to?" (Transformers) is key to designing custom architectures that fit your specific hardware constraints.</p>
+
+        <div class="footer">
+            <p><strong>Author:</strong> Anamitra Sarkar</p>
+            <p><strong>Published:</strong> October 2025</p>
+            <p><strong>Environment:</strong> Research & Development</p>
+        </div>
+    </div>
+</body>
+</html>
