@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Why Quantization Matters in 2025: A Deep Dive</title>
+    <style>
+        /* Core Design System - Matches tech_report3.html */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+            line-height: 1.8;
+            color: #e0e0e0;
+            background: #0a0a0a;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .paper-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Typography Hierarchy */
+        h1 {
+            font-size: 42px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            color: #ffffff;
+            letter-spacing: -1px;
+        }
+        
+        h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 56px 0 24px 0;
+            color: #00d4ff; /* Cyan Accent */
+            letter-spacing: -0.5px;
+            border-bottom: 2px solid #2a2a2a;
+            padding-bottom: 12px;
+        }
+        
+        h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 36px 0 16px 0;
+            color: #00ff88; /* Green Accent */
+        }
+        
+        h4 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 24px 0 12px 0;
+            color: #ffffff;
+        }
+        
+        p {
+            font-size: 17px;
+            line-height: 1.8;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+        }
+
+        /* Lists */
+        ul, ol {
+            margin: 20px 0 20px 30px;
+            color: #b0b0b0;
+        }
+        
+        li {
+            margin-bottom: 12px;
+            font-size: 17px;
+            line-height: 1.7;
+        }
+
+        strong {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Code & Pre */
+        code {
+            background: #1a1a1a;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 15px;
+            color: #00d4ff;
+        }
+
+        pre {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 24px 0;
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            color: #e0e0e0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Custom Components */
+        .summary-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(0, 255, 136, 0.05));
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+
+        .highlight-box {
+            background: #1a1a1a;
+            border-left: 4px solid #00d4ff;
+            padding: 20px 24px;
+            margin: 24px 0;
+            border-radius: 4px;
+        }
+
+        .toc {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 32px;
+            margin: 40px 0;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin: 16px 0 0 0;
+        }
+        
+        .toc li {
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        
+        .toc li:last-child {
+            border-bottom: none;
+        }
+
+        .toc a {
+            color: #b0b0b0;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .toc a:hover {
+            color: #00d4ff;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            padding-top: 40px;
+            border-top: 2px solid #2a2a2a;
+            text-align: center;
+            color: #707070;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="paper-container">
+        <h1>Why Quantization Matters in 2025: INT8, FP16, BF16, 4-bit NF4, GPTQ and AWQ Explained</h1>
+        
+        <div class="summary-box">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Abstract</h2>
+            <p>The artificial intelligence revolution has reached an inflection point where model performance is no longer the sole concern—deployment efficiency has become equally critical. In 2025, as large language models (LLMs) routinely exceed 70 billion parameters, the computational and memory requirements for training and inference have reached astronomical levels. This guide explores the complete landscape of modern quantization techniques, from foundational floating-point formats to cutting-edge 4-bit methods, providing the technical depth and practical guidance needed to deploy LLMs efficiently.</p>
+        </div>
+        
+        <div class="toc">
+            <h2 style="margin-top: 0; border: none; padding: 0;">Contents</h2>
+            <ul>
+                <li><a href="#importance">1. The Critical Importance of Quantization</a></li>
+                <li><a href="#formats">2. Floating-Point Formats (FP32, FP16, BF16)</a></li>
+                <li><a href="#int8">3. INT8 Quantization: The Workhorse</a></li>
+                <li><a href="#4bit">4. 4-bit Quantization: Breaking Barriers</a></li>
+                <li><a href="#benchmarks">5. Performance Benchmarks</a></li>
+                <li><a href="#code">6. Code Examples (HuggingFace)</a></li>
+                <li><a href="#decision">7. Decision Framework: When to Use What</a></li>
+                <li><a href="#applications">8. Real-World Applications</a></li>
+                <li><a href="#conclusion">9. Conclusion</a></li>
+            </ul>
+        </div>
+
+        <h2 id="importance">1. The Critical Importance of Quantization</h2>
+        <p>The explosion of large language models has created unprecedented demands on computational infrastructure. Training GPT-3 with 175 billion parameters originally required a cluster of 10,000 GPUs. Even smaller models present significant challenges: a 13B parameter model in FP16 requires approximately 26 GB of VRAM just for inference.</p>
+        <p>The trade-offs inherent in quantization are nuanced:</p>
+        <ul>
+            <li><strong>Accuracy versus speed:</strong> Reducing precision from FP32 to INT8 can yield 2-3× speedup with only 1-2% accuracy degradation.</li>
+            <li><strong>Memory versus model size:</strong> QLoRA's 4-bit NF4 quantization reduces a 65B model from 130 GB to just 48 GB.</li>
+            <li><strong>Computational efficiency:</strong> INT8 uses dedicated hardware units for maximum throughput.</li>
+        </ul>
+
+        <h2 id="formats">2. Floating-Point Formats: The Foundation</h2>
+        
+        <h3>FP32: Full Precision Computing</h3>
+        <p>FP32 (32-bit floating point) serves as the baseline, allocating 1 sign bit, 8 exponent bits, and 23 mantissa bits. While accurate, its 4-byte-per-parameter cost makes it impractical for modern large-scale models (a 7B model requires 28 GB).</p>
+
+        <h3>FP16: Half Precision</h3>
+        <p>FP16 cuts memory requirements in half (2 bytes). However, its limited dynamic range (max ±65,000) can cause numerical instability during training when gradients become extremely small or weights reach large magnitudes.</p>
+
+        <h3>BF16: The Training-Optimized Format</h3>
+        <p><strong>BF16 (Brain Floating Point 16)</strong> prioritizes dynamic range over precision. By allocating 8 exponent bits (matching FP32), it avoids the overflow/underflow issues of FP16. This makes BF16 the standard for training large models in 2025, especially on NVIDIA H100s and TPUs.</p>
+
+        <h2 id="int8">3. INT8 Quantization: The Hardware-Accelerated Workhorse</h2>
+        <p>INT8 maps continuous floating-point weights to discrete 8-bit integers (-128 to 127). This reduces memory consumption by 75% compared to FP32.</p>
+        
+        <div class="highlight-box">
+            <h3 style="margin-top: 0;">Quantization Formula</h3>
+            <p>For a floating point tensor with range [xmin, xmax]:</p>
+            <p><code>scale = 255 / (xmax - xmin)</code></p>
+            <p><code>zero_point = -round(scale * xmin)</code></p>
+            <p><code>xq = round(scale * x) + zero_point</code></p>
+        </div>
+
+        <p><strong>Performance:</strong> On NVIDIA H100 GPUs, INT8 inference reduces time-to-first-token by 8.5% and increases throughput by 31% compared to FP16. On CPUs, speedups can reach 4x.</p>
+
+        <h2 id="4bit">4. 4-bit Quantization: Breaking the Precision Barrier</h2>
+        <p>Three major approaches dominate the 4-bit landscape in 2025: <strong>NF4</strong>, <strong>GPTQ</strong>, and <strong>AWQ</strong>.</p>
+
+        <h3>NF4 (NormalFloat4) & QLoRA</h3>
+        <p>NF4 is information-theoretically optimal for weights following a normal distribution. It uses quantile-based binning rather than uniform spacing. Combined with <strong>Double Quantization</strong> (quantizing the quantization constants themselves), it enables fine-tuning 65B models on a single 48GB GPU.</p>
+
+        <h3>GPTQ: Layer-wise Post-Training Quantization</h3>
+        <p>GPTQ quantizes weights layer-by-layer, adjusting the remaining unquantized weights to compensate for the error introduced by quantization. It is highly efficient for inference but requires calibration data.</p>
+
+        <h3>AWQ: Activation-Aware Weight Quantization</h3>
+        <p>AWQ operates on the insight that <strong>not all weights are equally important</strong>. It protects the top 1% of salient weights (based on activation magnitude) by scaling them before quantization. This yields superior performance on instruction-tuned and multi-modal models compared to GPTQ.</p>
+
+        <h2 id="benchmarks">5. Performance Benchmarks</h2>
+        <ul>
+            <li><strong>Accuracy:</strong> AWQ achieves 0.5-1% perplexity degradation, often outperforming GPTQ on complex reasoning tasks (MT-Bench).</li>
+            <li><strong>Memory:</strong> 4-bit methods achieve 8x reduction vs FP32. A 7B model fits in 3.5 GB.</li>
+            <li><strong>Speed:</strong> 4-bit inference on consumer GPUs (RTX 3090/4090) shows 300% throughput increase due to reduced memory bandwidth pressure.</li>
+        </ul>
+
+        <h2 id="code">6. Code Examples: Practical Implementation</h2>
+
+        <h3>Loading a GPTQ Model</h3>
+        <pre><code>from transformers import AutoModelForCausalLM, AutoTokenizer
+
+model_id = "TheBloke/Llama-2-7B-GPTQ"
+
+tokenizer = AutoTokenizer.from_pretrained(model_id, use_fast=True)
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    device_map="auto",
+    trust_remote_code=False,
+    revision="main"
+)
+
+input_text = "The future of AI is"
+inputs = tokenizer(input_text, return_tensors="pt").to("cuda")
+outputs = model.generate(**inputs, max_new_tokens=128)
+print(tokenizer.decode(outputs[0]))</code></pre>
+
+        <h3>Fine-tuning with QLoRA (bitsandbytes)</h3>
+        <pre><code>import torch
+from transformers import AutoModelForCausalLM, BitsAndBytesConfig
+
+# Configure 4-bit NF4 quantization
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_compute_dtype=torch.bfloat16
+)
+
+# Load model
+model = AutoModelForCausalLM.from_pretrained(
+    "meta-llama/Llama-2-7b-hf",
+    quantization_config=bnb_config,
+    device_map="auto"
+)
+
+# ... Proceed with PEFT/LoRA training setup ...</code></pre>
+
+        <h2 id="decision">7. When to Use What: A 2025 Decision Framework</h2>
+        <ul>
+            <li><strong>Training:</strong> Use <strong>BF16</strong> on modern hardware (H100/A100). Use <strong>QLoRA</strong> if memory is constrained.</li>
+            <li><strong>Inference (Server):</strong> Use <strong>FP8</strong> on H100 for throughput. Use <strong>INT8</strong> on older GPUs.</li>
+            <li><strong>Inference (Consumer GPU):</strong> Use <strong>4-bit AWQ</strong>. It offers the best accuracy/speed balance for 24GB cards.</li>
+            <li><strong>Edge/Mobile:</strong> Use <strong>INT8</strong> or NPU-optimized 4-bit formats.</li>
+        </ul>
+
+        <h2 id="applications">8. Real-World Applications</h2>
+        <p><strong>Chatbots:</strong> Companies reduce costs by 3-5x deploying 4-bit models instead of FP16.</p>
+        <p><strong>Mobile AI:</strong> Google and Apple use quantized models for on-device translation (<100ms latency) and privacy-preserving features.</p>
+        <p><strong>Robotics:</strong> Tesla FSD uses INT8 transformers for sub-50ms latency in autonomous driving.</p>
+
+        <h2 id="conclusion">9. Conclusion</h2>
+        <p>Quantization has shifted from an optimization trick to a necessity. By mastering BF16 training, QLoRA fine-tuning, and AWQ inference, developers can deploy state-of-the-art intelligence on accessible hardware. The quantization revolution is not coming—it has arrived.</p>
+
+        <div class="footer">
+            <p><strong>Author:</strong> Anamitra Sarkar</p>
+            <p><strong>Published:</strong> 2025</p>
+            <p><strong>Environment:</strong> Research & Development</p>
+        </div>
+    </div>
+</body>
+</html>
